@@ -33,7 +33,7 @@ function drive_load()
     horizon = 10 + (love.graphics.getHeight() / 2)  -- just used for adding sky & fog
 
     default_fog_height = 200
-    fog_img = love.graphics.newImage('assets/fade 4.png')
+    fog_img = love.graphics.newImage('assets/fog fade.png')
     fog_img:setWrap('repeat', 'clamp')
     fog_quad = love.graphics.newQuad(
         0, 0,
@@ -59,7 +59,7 @@ function drive_load()
 
     -- road generation state --
     road = { }
-    max_segment_id = 1       -- id to give to new road segments
+    next_segment_id = 1      -- id to give to new road segments
     last_road_t = 0          -- when did we last make a new road segment?
     road_colours = default_road_colours
 
@@ -206,9 +206,9 @@ function get_hurt(dt)
     end
 end
 
-function next_segment_id()
-    max_segment_id = max_segment_id + 1
-    return max_segment_id - 1
+function get_segment_id()
+    next_segment_id = next_segment_id + 1
+    return next_segment_id - 1
 end
 
 function make_segment(desired_z)
@@ -224,7 +224,7 @@ function make_segment(desired_z)
     -- wobbliness = wobbliness + (math.random() * 2 * wobble_accel) - wobble_accel
     local desired_x = current_x + (math.random() * 2 * wobbliness) - wobbliness
 
-    return { x = desired_x, y = -1, z = desired_z, id = next_segment_id() }
+    return { x = desired_x, y = -1, z = desired_z, id = get_segment_id() }
 end
 
 function make_road(dt)
