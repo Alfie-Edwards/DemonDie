@@ -1,43 +1,50 @@
 --- equiv of basic love functions ---
 
 function drive_load()
-    -- car config
+    -- car config --
     start_speed = 1
     max_speed = 1000
-
     accel = 1.5
+    steering = 1
+    max_turn_rate = 3
 
-    -- road generation config
+    -- road generation config --
     road_width = 1  -- (is actually half road width, in world coords -1 -> 1)
 
     -- wobble_accel = 0.1
     wobbliness = 0.1
-
-    -- horizon = love.graphics.getHeight() / 2
     farplane = 20
     nearplane = 1
 
-    -- other config
+    -- other config --
     dbg = false
 
-    -- state
-    t = 0  -- time since start
-
+    -- car state --
     speed = start_speed
+    car_x = 0
+    steer_speed = 0
+    health = 100
 
+    -- road generation state --
     road = { }
-
     -- wobbliness = 0
-
     max_segment_id = 1
-
     last_road_t = 0
 
+    -- other state --
+    t = 0  -- time since start
+
+    -- run init code --
     init_road()
 end
 
 function drive_draw()
+    local t = get_steer_transform()
+    love.graphics.replaceTransform(t)
+
     draw_road()
+
+    love.graphics.origin()
 end
 
 function drive_update(dt)
@@ -47,7 +54,9 @@ function drive_update(dt)
 
     accelerate(dt)
 
-    drive(dt)
+    steer(dt)
+
+    move(dt)
 
     make_road(dt)
 
@@ -64,7 +73,16 @@ function accelerate(dt)
     end
 end
 
-function drive(dt)
+function steer(dt)
+    if love.keyboard.isDown("left") then
+        steer_speed = math.max(steer_speed + steering * dt, -max_turn_rate)
+    elseif love.keyboard.isDown("right") then
+        steer_speed = math.min(steer_speed - steering * dt, max_turn_rate)
+    end
+end
+
+function move(dt)
+    -- move forwards, in z (just move road backwards)
     local points_behind_nearplane = 0
     for i=#road,1,-1 do
         road[i].z = road[i].z - (speed * dt)
@@ -77,6 +95,9 @@ function drive(dt)
             table.remove(road, i)
         end
     end
+
+    -- move sideways, in x (ie. 'turn')
+    car_x = car_x + (steer_speed * dt)
 end
 
 function next_segment_id()
@@ -128,6 +149,7 @@ function draw_road()
         end
         love.graphics.setColor(shade, shade, shade)
 
+        -- get coords of current & next road segment
         local curr_x = road[i].x
         local curr_y = road[i].y
         local curr_z = road[i].z
@@ -135,6 +157,7 @@ function draw_road()
         local next_y = road[i + 1].y
         local next_z = road[i + 1].z
 
+        -- clamp to nearplane to prevent rendering errors (they'll get culled later)
         if curr_z < nearplane then
             curr_z = nearplane
         end
@@ -142,25 +165,30 @@ function draw_road()
             next_z = nearplane
         end
 
+        -- calculate a scaling factor, for basic perspective projection
         local curr_scale_factor = nearplane / curr_z
         local next_scale_factor = nearplane / next_z
 
-        local curr_y_screen = road[i].y * curr_scale_factor
-        local next_y_screen = road[i + 1].y * next_scale_factor
-
-        curr_y_screen = ((2 - (curr_y_screen + 1)) * love.graphics.getHeight() / 2)
-        next_y_screen = ((2 - (next_y_screen + 1)) * love.graphics.getHeight() / 2)
-
+        -- apply scaling factor to get perspective-corrected x & y coords in world-space
+        -- (ie. [-1, 1])
         local curr_left_screen = curr_x - road_width * curr_scale_factor
         local curr_right_screen = curr_x + road_width * curr_scale_factor
         local next_left_screen = next_x - road_width * next_scale_factor
         local next_right_screen = next_x + road_width * next_scale_factor
 
+        local curr_y_screen = curr_y * curr_scale_factor
+        local next_y_screen = next_y * next_scale_factor
+
+        -- turn world-space into screen-space
         curr_left_screen = ((curr_left_screen + 1) * love.graphics.getWidth() / 2)
         curr_right_screen = ((curr_right_screen + 1) * love.graphics.getWidth() / 2)
         next_left_screen = ((next_left_screen + 1) * love.graphics.getWidth() / 2)
         next_right_screen = ((next_right_screen + 1) * love.graphics.getWidth() / 2)
 
+        curr_y_screen = ((2 - (curr_y_screen + 1)) * love.graphics.getHeight() / 2)
+        next_y_screen = ((2 - (next_y_screen + 1)) * love.graphics.getHeight() / 2)
+
+        -- draw the quad for this road segment
         vertices = {
             curr_left_screen, curr_y_screen,
             curr_right_screen, curr_y_screen,
@@ -171,4 +199,12 @@ function draw_road()
 
         love.graphics.polygon("fill", vertices)
     end
+end
+
+function get_steer_transform()
+    local t = love.math.newTransform()
+
+    t:translate(car_x * love.graphics.getWidth() / 2, 0)
+
+    return t
 end
