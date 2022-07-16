@@ -1,3 +1,61 @@
+--- equiv of basic love functions ---
+
+function drive_load()
+    -- car config
+    start_speed = 1
+    max_speed = 1000
+
+    accel = 1.5
+
+    -- road generation config
+    road_width = 1  -- (is actually half road width, in world coords -1 -> 1)
+
+    -- wobble_accel = 0.1
+    wobbliness = 0.1
+
+    -- horizon = love.graphics.getHeight() / 2
+    farplane = 20
+    nearplane = 1
+
+    -- other config
+    dbg = false
+
+    -- state
+    t = 0  -- time since start
+
+    speed = start_speed
+
+    road = { }
+
+    -- wobbliness = 0
+
+    max_segment_id = 1
+
+    last_road_t = 0
+
+    init_road()
+end
+
+function drive_draw()
+    draw_road()
+end
+
+function drive_update(dt)
+    if dbg then print('--- update ---') end
+
+    t = t + dt
+
+    accelerate(dt)
+
+    drive(dt)
+
+    make_road(dt)
+
+    if dbg then print() end
+end
+
+--- other stuff ---
+
 function accelerate(dt)
     if love.keyboard.isDown("up") then
         speed = math.min(speed + accel * dt, max_speed)
@@ -83,8 +141,6 @@ function draw_road()
         if next_z < nearplane then
             next_z = nearplane
         end
-
-        print(curr_x)
 
         local curr_scale_factor = nearplane / curr_z
         local next_scale_factor = nearplane / next_z
