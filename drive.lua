@@ -5,17 +5,30 @@ function drive_load()
     start_speed = 1          -- default car speed
     max_speed = 1000         -- max car speed
     accel = 1.5              -- acceleration
-    steering = 1             -- steering speed
+    steering = 4             -- steering speed
     max_turn_rate = 3        -- maximum rate of turn
     terrain_damage = 10      -- how much damage terrain does
+    default_steering_friction = 2  -- how much steering amount want to return to 0
 
     -- road generation config --
     road_width = 1           -- (is actually half road width, in world coords -1 -> 1)
-
     -- wobble_accel = 0.1
     wobbliness = 0.1
     farplane = 20
     nearplane = 1
+
+    default_road_colours = {
+        { r = 0.3, g = 0.3, b = 0.3 },
+        { r = 0.6, g = 0.6, b = 0.6 },
+    }
+
+    icy_road_colours = {
+        { r = 0.57, g = 0.85, b = 0.90 },
+        { r = 0.67, g = 0.90, b = 0.91 },
+    }
+
+    -- effects config --
+    icy_timeout_duration = 0.2
 
     -- other config --
     dbg = false
@@ -25,11 +38,17 @@ function drive_load()
     car_x = 0
     steer_speed = 0
     health = 100
+    steering_friction = default_steering_friction
 
     -- road generation state --
     road = { }
     max_segment_id = 1       -- id to give to new road segments
     last_road_t = 0          -- when did we last make a new road segment?
+    road_colours = default_road_colours
+
+    -- effects state --
+    is_icy = false
+    icy_timeout = 0
 
     -- other state --
     t = 0                    -- time since start
@@ -58,6 +77,8 @@ function drive_update(dt)
 
     move(dt)
 
+    set_icy(dt)
+
     get_hurt(dt)
 
     make_road(dt)
@@ -81,6 +102,12 @@ function steer(dt)
     elseif love.keyboard.isDown("right") then
         steer_speed = math.min(steer_speed - steering * dt, max_turn_rate)
     end
+
+    if steer_speed > 0 then
+        steer_speed = math.max(steer_speed - (steering_friction * dt), 0)
+    elseif steer_speed < 0 then
+        steer_speed = math.min(steer_speed + (steering_friction * dt), 0)
+    end
 end
 
 function move(dt)
@@ -102,6 +129,22 @@ function move(dt)
     car_x = car_x + (steer_speed * dt)
 end
 
+function set_icy(dt)
+    icy_timeout = icy_timeout - dt
+
+    if not is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
+        is_icy = true
+        icy_timeout = icy_timeout_duration
+        steering_friction = 0
+        road_colours = icy_road_colours
+    elseif is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
+        is_icy = false
+        icy_timeout = icy_timeout_duration
+        steering_friction = default_steering_friction
+        road_colours = default_road_colours
+    end
+end
+
 function get_hurt(dt)
     if math.abs(car_x) > 1 then
         health = health - terrain_damage * dt
@@ -117,8 +160,9 @@ function next_segment_id()
     return max_segment_id - 1
 end
 
-function make_segment_z(desired_z)
+function make_segment(desired_z)
     -- TODO smart generation
+    local desired_z = desired_z or farplane
     local spawn_margin = 0
 
     local current_x = 0
@@ -134,10 +178,6 @@ function make_segment_z(desired_z)
     return { x = desired_x, y = -1, z = desired_z, id = next_segment_id() }
 end
 
-function make_segment()
-    return make_segment_z(farplane)
-end
-
 function make_road(dt)
     if speed > 0 and t - last_road_t <= (1 / speed) then
         return
@@ -149,17 +189,14 @@ end
 
 function init_road()
     for i=1,farplane do
-        table.insert(road, make_segment_z(i))
+        table.insert(road, make_segment(i))
     end
 end
 
 function draw_road()
     for i=1, #road - 1 do
-        local shade = 0.6
-        if road[i].id % 2 == 0 then
-            shade = 0.3
-        end
-        love.graphics.setColor(shade, shade, shade)
+        local col = road_colours[(road[i].id % 2) + 1]
+        love.graphics.setColor(col.r, col.g, col.b)
 
         -- get coords of current & next road segment
         local curr_x = road[i].x
