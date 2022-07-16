@@ -12,10 +12,11 @@ function drive_load()
 
     -- road generation config --
     road_width = 2           -- (is actually half road width, in world coords -1 -> 1)
-    -- wobble_accel = 0.2
-    wobbliness = 0.3
     farplane = 50
     nearplane = 0.3
+
+    waypoint_range = 10
+    distance_between_waypoints = 50
 
     -- visuals config --
     background_colour = { 0.91, 0.78, 0.47 }
@@ -32,7 +33,7 @@ function drive_load()
 
     horizon = 0 + (love.graphics.getHeight() / 2)  -- just used for adding sky & fog
 
-    default_fog_height = 50
+    default_fog_height = 100
     fog_img = love.graphics.newImage('assets/fog fade.png')
     fog_img:setWrap('repeat', 'clamp')
     fog_quad = love.graphics.newQuad(
@@ -63,6 +64,10 @@ function drive_load()
     last_road_t = 0          -- when did we last make a new road segment?
     road_colours = default_road_colours
 
+    current_waypoint = nil
+    prev_waypoint_x = 0
+    prev_waypoint_z = 0
+
     -- visuals state --
     fog_height = default_fog_height
 
@@ -74,6 +79,7 @@ function drive_load()
 
     -- other state --
     t = 0                    -- time since start
+    d = 0                    -- distance travelled since start
 
     -- run init code --
     init_road()
@@ -99,6 +105,7 @@ function drive_update(dt)
     if dbg then print('--- update ---') end
 
     t = t + dt
+    d = d + (speed * dt)
 
     accelerate(dt)
 
@@ -111,6 +118,8 @@ function drive_update(dt)
     set_darkness(dt)
 
     get_hurt(dt)
+
+    update_waypoint()
 
     make_road(dt)
 
@@ -201,13 +210,70 @@ function get_hurt(dt)
     end
 end
 
+function update_waypoint()
+    if current_waypoint == nil then
+        prev_waypoint_x = 0
+        current_waypoint = 0
+        prev_waypoint_z = d
+    elseif (d - prev_waypoint_z) > distance_between_waypoints then
+        prev_waypoint_x = current_waypoint or 0
+        current_waypoint = (math.random() * 2 * waypoint_range) - waypoint_range
+        prev_waypoint_z = d
+    end
+end
+
 function get_segment_id()
     next_segment_id = next_segment_id + 1
     return next_segment_id - 1
 end
 
-function make_segment(desired_z)
-    -- TODO smart generation
+function ease_lerp(fraction)
+    return fraction
+end
+
+function ease_cubic(fraction)
+    if fraction < 0.5 then
+        return 4 * fraction * fraction * fraction
+    else
+        return 1 - math.pow(-2 * fraction + 2, 3) / 2
+    end
+end
+
+function ease_quad(fraction)
+    if fraction < 0.5 then
+        return 2 * fraction * fraction
+    else
+        return 1 - math.pow(-2 * fraction + 2, 2) / 2
+    end
+end
+
+function make_segment_waypoints(desired_z)
+    local desired_z = desired_z or farplane
+    local spawn_margin = 0
+
+    local current_x = 0
+    if #road > 0 then
+        current_x = road[#road].x
+    end
+
+    if current_waypoint == nil then
+        update_waypoint()
+    end
+
+    local fraction_z_distance_moved = (d - prev_waypoint_z) / distance_between_waypoints
+    local progress = ease_quad(fraction_z_distance_moved)
+    local total_x_distance_between_waypoints = current_waypoint - prev_waypoint_x
+    local adjustment = total_x_distance_between_waypoints * progress
+    local desired_x = prev_waypoint_x + adjustment
+
+    return { x = desired_x, y = -1, z = desired_z, id = get_segment_id() }
+end
+
+function make_segment_wobble(desired_z)
+    -- 'globals'
+    -- wobble_accel = 0.2
+    wobbliness = 0.3
+
     local desired_z = desired_z or farplane
     local spawn_margin = 0
 
@@ -222,6 +288,10 @@ function make_segment(desired_z)
     print(desired_x)
 
     return { x = desired_x, y = -1, z = desired_z, id = get_segment_id() }
+end
+
+function make_segment(desired_z)
+    return make_segment_waypoints(desired_z)
 end
 
 function make_road(dt)
@@ -266,22 +336,22 @@ function draw_road()
 
         -- apply scaling factor to get perspective-corrected x & y coords in world-space
         -- (ie. [-1, 1])
-        local curr_left_screen  = ((car_x + curr_x) - road_width) * curr_scale_factor
-        local curr_right_screen = ((car_x + curr_x) + road_width) * curr_scale_factor
-        local next_left_screen  = ((car_x + next_x) - road_width) * next_scale_factor
-        local next_right_screen = ((car_x + next_x) + road_width) * next_scale_factor
+        local curr_left_world  = ((car_x + curr_x) - road_width) * curr_scale_factor
+        local curr_right_world = ((car_x + curr_x) + road_width) * curr_scale_factor
+        local next_left_world  = ((car_x + next_x) - road_width) * next_scale_factor
+        local next_right_world = ((car_x + next_x) + road_width) * next_scale_factor
 
-        local curr_y_screen = curr_y * curr_scale_factor
-        local next_y_screen = next_y * next_scale_factor
+        local curr_y_world = curr_y * curr_scale_factor
+        local next_y_world = next_y * next_scale_factor
 
         -- turn world-space into screen-space
-        curr_left_screen =  ((curr_left_screen + 1)  * love.graphics.getWidth() / 2)
-        curr_right_screen = ((curr_right_screen + 1) * love.graphics.getWidth() / 2)
-        next_left_screen =  ((next_left_screen + 1)  * love.graphics.getWidth() / 2)
-        next_right_screen = ((next_right_screen + 1) * love.graphics.getWidth() / 2)
+        local curr_left_screen =  (curr_left_world + 1)  * love.graphics.getWidth() / 2
+        local curr_right_screen = (curr_right_world + 1) * love.graphics.getWidth() / 2
+        local next_left_screen =  (next_left_world + 1)  * love.graphics.getWidth() / 2
+        local next_right_screen = (next_right_world + 1) * love.graphics.getWidth() / 2
 
-        curr_y_screen = ((2 - (curr_y_screen + 1)) * love.graphics.getHeight() / 2)
-        next_y_screen = ((2 - (next_y_screen + 1)) * love.graphics.getHeight() / 2)
+        local curr_y_screen = (2 - (curr_y_world + 1)) * love.graphics.getHeight() / 2
+        local next_y_screen = (2 - (next_y_world + 1)) * love.graphics.getHeight() / 2
 
         -- draw the quad for this road segment
         vertices = {
@@ -296,3 +366,22 @@ function draw_road()
     end
 end
 
+function draw_road_dots()
+    for i=1, #road - 1 do
+        local col = road_colours[(road[i].id % 2) + 1]
+        love.graphics.setColor(col.r, col.g, col.b)
+
+        -- get coords of current & next road segment
+        local curr_x = road[i].x
+        local curr_z = road[i].z
+
+        curr_z = curr_z / farplane
+
+        -- print(curr_x, curr_z)
+
+        local curr_x_screen = (curr_x + 1) * love.graphics.getWidth() / 2
+        local curr_z_screen = (2 - (curr_z + 1)) * love.graphics.getHeight() / 2
+
+        love.graphics.circle("fill", curr_x_screen, curr_z_screen, 10)
+    end
+end
