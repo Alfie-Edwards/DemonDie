@@ -2,7 +2,7 @@
 
 function drive_load()
     -- car config --
-    start_speed = 1          -- default car speed
+    start_speed = 10         -- default car speed
     max_speed = 1000         -- max car speed
     accel = 1.5              -- acceleration
     steering = 4             -- steering speed
@@ -11,11 +11,11 @@ function drive_load()
     default_steering_friction = 2  -- how much steering amount want to return to 0
 
     -- road generation config --
-    road_width = 1           -- (is actually half road width, in world coords -1 -> 1)
-    -- wobble_accel = 0.1
-    wobbliness = 0.1
-    farplane = 20
-    nearplane = 1
+    road_width = 2           -- (is actually half road width, in world coords -1 -> 1)
+    -- wobble_accel = 0.2
+    wobbliness = 0.3
+    farplane = 50
+    nearplane = 0.3
 
     -- visuals config --
     background_colour = { 0.91, 0.78, 0.47 }
@@ -30,9 +30,9 @@ function drive_load()
         { r = 0.67, g = 0.90, b = 0.91 },
     }
 
-    horizon = 10 + (love.graphics.getHeight() / 2)  -- just used for adding sky & fog
+    horizon = 0 + (love.graphics.getHeight() / 2)  -- just used for adding sky & fog
 
-    default_fog_height = 200
+    default_fog_height = 50
     fog_img = love.graphics.newImage('assets/fog fade.png')
     fog_img:setWrap('repeat', 'clamp')
     fog_quad = love.graphics.newQuad(
@@ -84,16 +84,10 @@ function drive_draw()
     love.graphics.setBackgroundColor(background_colour)
 
     -- road
-    local t = get_steer_transform()
-    love.graphics.replaceTransform(t)
-
     draw_road()
-
-    love.graphics.origin()
 
     -- sky background
     love.graphics.setColor(0, 0, 0)
-    -- local fog_border_height = ((2 - (horizon + 1)) * love.graphics.getHeight() / 2)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), horizon)
 
     -- fog edge
@@ -197,12 +191,13 @@ function set_darkness(dt)
 end
 
 function get_hurt(dt)
-    if math.abs(car_x) > 1 then
+    if #road > 0 and math.abs(car_x - road[1].x) > 0.5 then
+        if dbg then print('uh oh') end
         health = health - terrain_damage * dt
     end
 
     if health <= 0 then
-        print('YOU DEAD')
+        if dbg then print('YOU DEAD') end
     end
 end
 
@@ -223,6 +218,8 @@ function make_segment(desired_z)
 
     -- wobbliness = wobbliness + (math.random() * 2 * wobble_accel) - wobble_accel
     local desired_x = current_x + (math.random() * 2 * wobbliness) - wobbliness
+
+    print(desired_x)
 
     return { x = desired_x, y = -1, z = desired_z, id = get_segment_id() }
 end
@@ -269,18 +266,18 @@ function draw_road()
 
         -- apply scaling factor to get perspective-corrected x & y coords in world-space
         -- (ie. [-1, 1])
-        local curr_left_screen = curr_x - road_width * curr_scale_factor
-        local curr_right_screen = curr_x + road_width * curr_scale_factor
-        local next_left_screen = next_x - road_width * next_scale_factor
-        local next_right_screen = next_x + road_width * next_scale_factor
+        local curr_left_screen  = ((car_x + curr_x) - road_width) * curr_scale_factor
+        local curr_right_screen = ((car_x + curr_x) + road_width) * curr_scale_factor
+        local next_left_screen  = ((car_x + next_x) - road_width) * next_scale_factor
+        local next_right_screen = ((car_x + next_x) + road_width) * next_scale_factor
 
         local curr_y_screen = curr_y * curr_scale_factor
         local next_y_screen = next_y * next_scale_factor
 
         -- turn world-space into screen-space
-        curr_left_screen = ((curr_left_screen + 1) * love.graphics.getWidth() / 2)
+        curr_left_screen =  ((curr_left_screen + 1)  * love.graphics.getWidth() / 2)
         curr_right_screen = ((curr_right_screen + 1) * love.graphics.getWidth() / 2)
-        next_left_screen = ((next_left_screen + 1) * love.graphics.getWidth() / 2)
+        next_left_screen =  ((next_left_screen + 1)  * love.graphics.getWidth() / 2)
         next_right_screen = ((next_right_screen + 1) * love.graphics.getWidth() / 2)
 
         curr_y_screen = ((2 - (curr_y_screen + 1)) * love.graphics.getHeight() / 2)
@@ -297,13 +294,5 @@ function draw_road()
 
         love.graphics.polygon("fill", vertices)
     end
-end
-
-function get_steer_transform()
-    local t = love.math.newTransform()
-
-    t:translate(car_x * love.graphics.getWidth() / 2, 0)
-
-    return t
 end
 
