@@ -2,14 +2,15 @@
 
 function drive_load()
     -- car config --
-    start_speed = 1
-    max_speed = 1000
-    accel = 1.5
-    steering = 1
-    max_turn_rate = 3
+    start_speed = 1          -- default car speed
+    max_speed = 1000         -- max car speed
+    accel = 1.5              -- acceleration
+    steering = 1             -- steering speed
+    max_turn_rate = 3        -- maximum rate of turn
+    terrain_damage = 10      -- how much damage terrain does
 
     -- road generation config --
-    road_width = 1  -- (is actually half road width, in world coords -1 -> 1)
+    road_width = 1           -- (is actually half road width, in world coords -1 -> 1)
 
     -- wobble_accel = 0.1
     wobbliness = 0.1
@@ -27,12 +28,11 @@ function drive_load()
 
     -- road generation state --
     road = { }
-    -- wobbliness = 0
-    max_segment_id = 1
-    last_road_t = 0
+    max_segment_id = 1       -- id to give to new road segments
+    last_road_t = 0          -- when did we last make a new road segment?
 
     -- other state --
-    t = 0  -- time since start
+    t = 0                    -- time since start
 
     -- run init code --
     init_road()
@@ -57,6 +57,8 @@ function drive_update(dt)
     steer(dt)
 
     move(dt)
+
+    get_hurt(dt)
 
     make_road(dt)
 
@@ -98,6 +100,16 @@ function move(dt)
 
     -- move sideways, in x (ie. 'turn')
     car_x = car_x + (steer_speed * dt)
+end
+
+function get_hurt(dt)
+    if math.abs(car_x) > 1 then
+        health = health - terrain_damage * dt
+    end
+
+    if health <= 0 then
+        print('YOU DEAD')
+    end
 end
 
 function next_segment_id()
