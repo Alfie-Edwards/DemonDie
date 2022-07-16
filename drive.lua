@@ -17,6 +17,9 @@ function drive_load()
     farplane = 20
     nearplane = 1
 
+    -- visuals config --
+    background_colour = { 0.91, 0.78, 0.47 }
+
     default_road_colours = {
         { r = 0.3, g = 0.3, b = 0.3 },
         { r = 0.6, g = 0.6, b = 0.6 },
@@ -27,8 +30,22 @@ function drive_load()
         { r = 0.67, g = 0.90, b = 0.91 },
     }
 
+    horizon = 10 + (love.graphics.getHeight() / 2)  -- just used for adding sky & fog
+
+    default_fog_height = 200
+    fog_img = love.graphics.newImage('assets/fade 4.png')
+    fog_img:setWrap('repeat', 'clamp')
+    fog_quad = love.graphics.newQuad(
+        0, 0,
+        love.graphics.getWidth(), fog_img:getHeight(),
+        fog_img:getWidth(), fog_img:getHeight()
+    )
+
     -- effects config --
     icy_timeout_duration = 0.2
+    darkness_timeout_duration = 0.2
+
+    darkness_fog_height = 750
 
     -- other config --
     dbg = false
@@ -46,9 +63,14 @@ function drive_load()
     last_road_t = 0          -- when did we last make a new road segment?
     road_colours = default_road_colours
 
+    -- visuals state --
+    fog_height = default_fog_height
+
     -- effects state --
     is_icy = false
     icy_timeout = 0
+    is_darkness = false
+    darkness_timeout = 0
 
     -- other state --
     t = 0                    -- time since start
@@ -58,12 +80,25 @@ function drive_load()
 end
 
 function drive_draw()
+    -- bg
+    love.graphics.setBackgroundColor(background_colour)
+
+    -- road
     local t = get_steer_transform()
     love.graphics.replaceTransform(t)
 
     draw_road()
 
     love.graphics.origin()
+
+    -- sky background
+    love.graphics.setColor(0, 0, 0)
+    -- local fog_border_height = ((2 - (horizon + 1)) * love.graphics.getHeight() / 2)
+    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), horizon)
+
+    -- fog edge
+    local scale_factor = fog_height / fog_img:getHeight()
+    love.graphics.draw(fog_img, fog_quad, 0, horizon, 0, 1, scale_factor)
 end
 
 function drive_update(dt)
@@ -78,6 +113,8 @@ function drive_update(dt)
     move(dt)
 
     set_icy(dt)
+
+    set_darkness(dt)
 
     get_hurt(dt)
 
@@ -145,6 +182,20 @@ function set_icy(dt)
     end
 end
 
+function set_darkness(dt)
+    darkness_timeout = darkness_timeout - dt
+
+    if not is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
+        is_darkness = true
+        darkness_timeout = darkness_timeout_duration
+        fog_height = darkness_fog_height
+    elseif is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
+        is_darkness = false
+        darkness_timeout = darkness_timeout_duration
+        fog_height = default_fog_height
+    end
+end
+
 function get_hurt(dt)
     if math.abs(car_x) > 1 then
         health = health - terrain_damage * dt
@@ -170,10 +221,8 @@ function make_segment(desired_z)
         current_x = road[#road].x
     end
 
-    local desired_x = current_x + (math.random() * 2 * wobbliness) - wobbliness
-
     -- wobbliness = wobbliness + (math.random() * 2 * wobble_accel) - wobble_accel
-    -- local desired_x = current_x + (math.random() * 2 * wobbliness) - wobbliness
+    local desired_x = current_x + (math.random() * 2 * wobbliness) - wobbliness
 
     return { x = desired_x, y = -1, z = desired_z, id = next_segment_id() }
 end
@@ -257,3 +306,4 @@ function get_steer_transform()
 
     return t
 end
+
