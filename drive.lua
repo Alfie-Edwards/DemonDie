@@ -55,18 +55,17 @@ function drive_load()
 
     -- visuals config --
     ground_colour = { 0.91, 0.78, 0.47 }
-    -- ground_colour = { r = 0.91, g = 0.78, b = 0.47 }
 
     default_road_colours = {
-        { r = 0.3, g = 0.3, b = 0.3 },
-        { r = 0.3, g = 0.3, b = 0.3 }  -- we don't need alternation with road markings
-        -- { r = 0.6, g = 0.6, b = 0.6 },
+        { 0.3, 0.3, 0.3 },
+        { 0.3, 0.3, 0.3 }  -- we don't need alternation with road markings
+        -- { 0.6, 0.6, 0.6 },
     }
 
     icy_road_colours = {
-        { r = 0.57, g = 0.85, b = 0.90 },
-        { r = 0.57, g = 0.85, b = 0.90 }  -- we don't need alternation with road markings
-        -- { r = 0.67, g = 0.90, b = 0.91 },
+        { 0.57, 0.85, 0.90 },
+        { 0.57, 0.85, 0.90 }  -- we don't need alternation with road markings
+        -- { 0.67, 0.90, 0.91 },
     }
 
     road_marking_width = 0.1
@@ -479,8 +478,7 @@ function draw_road()
         }
 
         local col = road_colours[(road[i].id % 2) + 1]
-        -- love.graphics.setColor(col.r, col.g, col.b)
-        love.graphics.setColor(distance_tint({col.r, col.g, col.b}, curr_z))
+        love.graphics.setColor(distance_tint(col, curr_z))
         love.graphics.polygon("fill", vertices)
 
         if (road[i].id % 2) == 0 then
@@ -513,8 +511,7 @@ end
 function draw_road_dots()
     for i=1, #road - 1 do
         local col = road_colours[(road[i].id % 2) + 1]
-        -- love.graphics.setColor(col.r, col.g, col.b)
-        love.graphics.setColor({col.r, col.g, col.b})
+        love.graphics.setColor(col)
 
         local curr_x = road[i].x
         local curr_z = road[i].z
