@@ -43,13 +43,17 @@ function drive_load()
 
     default_road_colours = {
         { r = 0.3, g = 0.3, b = 0.3 },
-        { r = 0.6, g = 0.6, b = 0.6 },
+        { r = 0.3, g = 0.3, b = 0.3 }  -- we don't need alternation with road markings
+        -- { r = 0.6, g = 0.6, b = 0.6 },
     }
 
     icy_road_colours = {
         { r = 0.57, g = 0.85, b = 0.90 },
-        { r = 0.67, g = 0.90, b = 0.91 },
+        { r = 0.57, g = 0.85, b = 0.90 }  -- we don't need alternation with road markings
+        -- { r = 0.67, g = 0.90, b = 0.91 },
     }
+
+    road_marking_width = 0.1
 
     horizon = 0 + (love.graphics.getHeight() / 2)  -- just used for adding sky & fog
 
@@ -421,7 +425,7 @@ function draw_road()
         local curr_y_screen = world2screen_y(curr_y_world)
         local next_y_screen = world2screen_y(next_y_world)
 
-        -- draw the quad for this road segment
+        -- draw the trapezoid for this road segment
         vertices = {
             curr_left_screen, curr_y_screen,
             curr_right_screen, curr_y_screen,
@@ -431,6 +435,30 @@ function draw_road()
         }
 
         love.graphics.polygon("fill", vertices)
+
+        if (road[i].id % 2) == 0 then
+            -- draw a road marking
+            local front_left_world  = ((curr_x - car_x) - road_marking_width) * curr_scale_factor
+            local front_right_world = ((curr_x - car_x) + road_marking_width) * curr_scale_factor
+            local back_left_world  = ((next_x - car_x) - road_marking_width) * next_scale_factor
+            local back_right_world = ((next_x - car_x) + road_marking_width) * next_scale_factor
+
+            local front_left_screen =  world2screen_x(front_left_world)
+            local front_right_screen = world2screen_x(front_right_world)
+            local back_left_screen =  world2screen_x(back_left_world)
+            local back_right_screen = world2screen_x(back_right_world)
+
+            vertices = {
+                front_left_screen, curr_y_screen,
+                front_right_screen, curr_y_screen,
+
+                back_right_screen, next_y_screen,
+                back_left_screen, next_y_screen
+            }
+
+            love.graphics.setColor(1, 1, 1)
+            love.graphics.polygon("fill", vertices)
+        end
     end
 end
 
