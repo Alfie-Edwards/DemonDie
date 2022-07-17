@@ -125,6 +125,7 @@ function Die:do_effect(dt)
         set_demonic_obstacles()
     elseif (self.number == 5) then
         -- nudge controls
+        set_nudging()
     elseif (self.number == 6) then
         -- view effects
     end
@@ -140,6 +141,7 @@ function Die:remove_effect(dt)
     elseif (self.number == 4) then
         unset_demonic_obstacles()
     elseif (self.number == 5) then
+        unset_nudging()
     elseif (self.number == 6) then
     end
 end

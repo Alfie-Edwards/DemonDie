@@ -1,5 +1,6 @@
---- equiv of basic love functions ---
+require "utils"
 
+--- equiv of basic love functions ---
 function drive_load(car)
     canvas_w = canvas_size[1]
     canvas_h = canvas_size[2]
@@ -68,6 +69,9 @@ function drive_load(car)
     demonspawn_max_distance_between_obstacles = 15
     demonspawn_obstacle_range = 7
 
+    seconds_per_nudge = 5
+    nudge_range = 1.5
+
     -- other config --
     dbg = false
 
@@ -99,7 +103,10 @@ function drive_load(car)
     is_darkness = false
     darkness_timeout = 0
     is_demonspawning = false
+    is_nudging = false
+    t_last_nudge = 0
 
+    -- visuals state --
     dark_threshold = default_dark_threshold
 
     -- other state --
@@ -124,24 +131,18 @@ function drive_update(dt)
 
     move(dt)
 
-    -- dbg_icy(dt)
-    -- dbg_darkness(dt)
-
     get_hurt(dt)
 
     update_waypoint()
     make_road(dt)
 
     update_obstacles()
+    update_nudge()
 
     if dbg then print() end
 end
 
 --- other stuff ---
-function randfloat(low, high)
-    return (math.random() * (high - low)) + low
-end
-
 function ob_type(i)
     if obstacles[i].kind == "demonspawn" then
         return demonspawn
@@ -228,6 +229,15 @@ function unset_demonic_obstacles()
     min_distance_between_obstacles = default_min_distance_between_obstacles
     max_distance_between_obstacles = default_max_distance_between_obstacles
     obstacle_range = default_obstacle_range
+end
+
+function set_nudging()
+    is_nudging = true
+end
+
+function unset_nudging()
+    is_nudging = false
+    car.steering_nudge = 0
 end
 
 function get_hurt(dt)
@@ -570,4 +580,17 @@ function draw_obstacles()
         love.graphics.setColor(1, 1, 1)
         ::continue::
     end
+end
+
+function update_nudge()
+    if not is_nudging or math.abs(t - t_last_nudge) < seconds_per_nudge then
+        return
+    end
+
+    local amount = randfloat(-nudge_range, nudge_range)
+    car.steering_nudge = amount
+
+    print('set steering nudge to', car.steering_nudge)
+
+    t_last_nudge = t
 end
