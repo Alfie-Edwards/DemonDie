@@ -20,7 +20,8 @@ Car = {
     x = 0,
     steer_speed = 0,
     health = 100,
-    steering_friction = nil
+    steering_friction = nil,
+    d = 0,  -- total distance moved
 
 }
 Car.__index = Car
@@ -43,6 +44,14 @@ function Car:update(dt)
     else
         self.temperature = self.temperature + dt / 6000
     end
+
+    self.d = self.d + (self.speed * dt)
+
+    self:accelerate(dt)
+    self:steer(dt)
+
+    -- move sideways, in x (ie. 'turn')
+    self.x = self.x + (self.steer_speed * dt)
 end
 
 function Car:toggle_station()

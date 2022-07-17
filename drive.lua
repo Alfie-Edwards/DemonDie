@@ -11,7 +11,7 @@ function drive_load(car)
     -----------------------------------------------------
 
     -- road generation config --
-    road_width = 2           -- (is actually half road width, in world coords -1 -> 1)
+    road_width = 3           -- (is actually half road width, in world coords -1 -> 1)
     farplane = 50
     nearplane = 0.2
 
@@ -104,7 +104,6 @@ function drive_load(car)
 
     -- other state --
     t = 0                    -- time since start
-    d = 0                    -- distance travelled since start
 
     -- run init code --
     init_road()
@@ -122,10 +121,7 @@ function drive_update(dt)
     if dbg then print('--- update ---') end
 
     t = t + dt
-    d = d + (car.speed * dt)
 
-    car:accelerate(dt)
-    car:steer(dt)
     move(dt)
 
     set_icy(dt)
@@ -168,9 +164,6 @@ function move(dt)
     for i=#obstacles,1,-1 do
         obstacles[i].z = obstacles[i].z - (car.speed * dt)
     end
-
-    -- move sideways, in x (ie. 'turn')
-    car.x = car.x + (car.steer_speed * dt)
 end
 
 function set_icy(dt)
@@ -204,7 +197,7 @@ function set_darkness(dt)
 end
 
 function get_hurt(dt)
-    if #road > 0 and math.abs(car.x - road[1].x) > 1 then
+    if #road > 0 and math.abs(car.x - road[1].x) > road_width then
         if dbg then print('off the road!') end
         car.health = car.health - car.terrain_damage * dt
     end
@@ -228,14 +221,14 @@ function update_waypoint()
     if current_waypoint == nil then
         prev_waypoint_x = 0
         current_waypoint = 0
-        prev_waypoint_z = d
-    elseif (d - prev_waypoint_z) > distance_between_waypoints then
+        prev_waypoint_z = car.d
+    elseif (car.d - prev_waypoint_z) > distance_between_waypoints then
         local temp_prev_wpt = current_waypoint or 0
 
         current_waypoint = temp_prev_wpt + randfloat(-waypoint_wobbliness,
                                                      waypoint_wobbliness)
 
-        prev_waypoint_z = d
+        prev_waypoint_z = car.d
         prev_waypoint_x = temp_prev_wpt
     end
 end
@@ -273,7 +266,7 @@ function make_segment_waypoints(desired_z)
     end
 
     -- interpolate with an easing function to the next waypoint
-    local fraction_z_distance_moved = (d - prev_waypoint_z) / distance_between_waypoints
+    local fraction_z_distance_moved = (car.d - prev_waypoint_z) / distance_between_waypoints
     local progress = ease_quad(fraction_z_distance_moved)
     local total_x_distance_between_waypoints = current_waypoint - prev_waypoint_x
     local adjustment = total_x_distance_between_waypoints * progress
@@ -495,11 +488,11 @@ function update_obstacles()
         dist_until_next_obstacle = randfloat(min_distance_between_obstacles,
                                              max_distance_between_obstacles)
     end
-    if (d - d_at_previous_obstacle) > dist_until_next_obstacle then
+    if (car.d - d_at_previous_obstacle) > dist_until_next_obstacle then
         dist_until_next_obstacle = randfloat(min_distance_between_obstacles,
                                              max_distance_between_obstacles)
 
-        d_at_previous_obstacle = d
+        d_at_previous_obstacle = car.d
         ob = make_obstacle()
         table.insert(obstacles, ob)
     end
