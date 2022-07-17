@@ -4,7 +4,7 @@ require "exorcism"
 require "die"
 require "car"
 require "page"
-
+require "bar"
 require "drive"
 
 function set_hud(name)
@@ -30,6 +30,7 @@ function create_huds()
             love.graphics.pop()
 
             love.graphics.draw(images.eye, 240, 11)
+            health_bar:draw()
         end
     )
     huds.cab:add_mouse_region(
@@ -123,6 +124,7 @@ function love.load()
     -- Create state
     die = Die.new()
     car = Car.new()
+    health_bar = Bar.new("health", 100, {0.28, 0.57, 0.5}, {0.14, 0.4, 0.34}, {0.96, 0.95, 0.82}, {0, 0, 0})
 
     -- Create road
     drive_load(car)
@@ -142,6 +144,7 @@ end
 
 function love.update(dt)
     drive_update(dt)
+    health_bar:set(car.health)
     current_hud:update(dt)
     car:update(dt)
     die:update(dt, car)
