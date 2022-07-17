@@ -29,6 +29,12 @@ function BoundingBox:height()
     return self.y2 - self.y1
 end
 
+function rotate_about(angle, x, y)
+    love.graphics.translate(x, y)
+    love.graphics.rotate(angle)
+    love.graphics.translate(-x, -y)
+end
+
 function wrap_text(text, font, width)
     local line_begin = 1
     local word_begin = 1

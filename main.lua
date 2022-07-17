@@ -18,6 +18,16 @@ function create_huds()
     huds.cab:add_draw_func(
         function()
             love.graphics.draw(images.cab)
+
+            love.graphics.push()
+            rotate_about(
+                car.steer_speed / car.max_turn_rate,
+                60 + images.wheel:getWidth() / 2,
+                90 + images.wheel:getHeight() / 2
+            )
+            love.graphics.draw(images.wheel, 60, 90)
+            love.graphics.pop()
+
             love.graphics.draw(images.eye, 240, 11)
         end
     )
@@ -86,6 +96,7 @@ function love.load()
         book = love.graphics.newImage("assets/book.png"),
         page_arrow = love.graphics.newImage("assets/page_arrow.png"),
         begin_ritual = love.graphics.newImage("assets/begin_ritual.png"),
+        wheel = love.graphics.newImage("assets/wheel.png"),
         die = {
             love.graphics.newImage("assets/die_I.png"),
             love.graphics.newImage("assets/die_II.png"),
