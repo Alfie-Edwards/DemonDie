@@ -76,16 +76,16 @@ function create_huds()
 
     book_text = {
         {
-            "I: ",
-            "I: "
+            "\n\nI: I ",
+            "\n\nII: "
         },
         {
-            "I: ",
-            "I: "
+            "\n\nIII: ",
+            "\n\nIV: "
         },
         {
-            "I: ",
-            "I: "
+            "\n\nV: ",
+            "\n\nVI: "
         },
     }
     local page_int = Hud.new()
@@ -97,7 +97,7 @@ function create_huds()
     set_page_text(
         page_int,
         "right",
-        "The section at the back of this book will guide you through the incantation process.\n\nDemon Dice take on different personalities depending on their orientation. These are all detailed in this book. An uncomfortable Die will need to have its power sealed more often.")
+        "The section at the back of this book will guide you through the incantation process.\nAn uncomfortable Die will need its power sealing more often. Demon Dice take on different characters (faces), with different needs, depending on their orientation. These are detailed in this book.")
     huds[page_name(1)] = page_int
 
     for i = 1,3,1 do
