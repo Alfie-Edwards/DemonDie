@@ -76,16 +76,16 @@ function create_huds()
 
     book_text = {
         {
-            "\n\nI: I ",
-            "\n\nII: "
+            "\n\n      FACE I:\n\nThis face is passionate and hot-headed. It loves loud noises and extreme heat.\n\nWhat ever you do, do not play it classical music.",
+            "\n\n       FACE II:\n\nThis face hates distraction more than anything. Try to provide silence, and stillness."
         },
         {
-            "\n\nIII: ",
-            "\n\nIV: "
+            "\n\n      FACE III:\n\nThis face can be difficult as it is very particular. It likes a dark environment, with a moderate temperature.\n\n If it seems unhappy, try playing some classical music.",
+            "\n\n       FACE IV:\n\nThis face is a thrill seeker. Unhelpfully, it has a tendency create dangerous situations. Just do your best to keep it entertained.\n\nFor whatever reason it despises country music."
         },
         {
-            "\n\nV: ",
-            "\n\nVI: "
+            "\n\n      FACE V:\n\nThis face is best described as nervous, and has a tendency to lash out if it feels threatened.\n\nKeep it in a cool place and avoid loud noises.",
+            "\n\n       FACE VI:\n\nThis troublesome face somewhat of a prankster.\n\nPlaying Jazz seems to keep it preoccupied, but avoid classical music."
         },
     }
     local page_int = Hud.new()
@@ -111,6 +111,11 @@ function create_huds()
 
     local page_ex = Hud.new()
     init_page(page_ex, 5)
+    set_page_text(
+        page_ex,
+        "left",
+        "\n\n      SEALING\n    INCANTATION\n\n\nIf a Demon Die in your posession begins causing too much trouble, recite the incantation on the next page to seal away its power."
+    )
     set_page_exorcism(page_ex, "right")
     huds[page_name(5)] = page_ex
 
