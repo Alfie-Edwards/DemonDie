@@ -4,7 +4,7 @@ Hud = {
 Hud.__index = Hud
 
 function Hud.new()
-    obj = {}
+    local obj = {}
     setmetatable(obj, Hud)
     obj.mouse_regions = {}
 
@@ -38,7 +38,7 @@ MouseRegion = {
 MouseRegion.__index = MouseRegion
 
 function MouseRegion.new(bounding_box, click_func, button)
-    obj = {}
+    local obj = {}
     setmetatable(obj, MouseRegion)
     obj.bounding_box = bounding_box
     obj.click_func = click_func

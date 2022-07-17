@@ -7,7 +7,7 @@ BoundingBox = {
 BoundingBox.__index = BoundingBox
 
 function BoundingBox.new(x1, y1, x2, y2)
-    obj = {}
+    local obj = {}
     setmetatable(obj, BoundingBox)
     obj.x1 = x1
     obj.y1 = y1
@@ -53,4 +53,11 @@ function screen_to_canvas(screen_x, screen_y)
     local canvas_x = (screen_x - x_offset) / scale
     local canvas_y = (screen_y - y_offset) / scale
     return canvas_x, canvas_y
+end
+
+function shuffle_list(list)
+  for i = #list, 2, -1 do
+    local j = math.random(i)
+    list[i], list[j] = list[j], list[i]
+  end
 end

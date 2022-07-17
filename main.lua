@@ -1,5 +1,8 @@
 require "utils"
 require "hud"
+require "exorcism"
+require "die"
+require "car"
 
 function set_hud(name)
     current_hud = huds[name]
@@ -97,6 +100,8 @@ function create_huds()
 end
 
 function love.load()
+    math.randomseed(os.time())
+
     -- Setup rendering
     love.graphics.setDefaultFilter("nearest", "nearest", 0)
     font = love.graphics.newFont("assets/font.ttf", 5, "none")
@@ -115,23 +120,14 @@ function love.load()
         book = love.graphics.newImage("assets/book.png"),
         page_arrow = love.graphics.newImage("assets/page_arrow.png"),
     }
-    cube = {
-        points = {{-0.5, -0.5, -0.5}, {-0.5, -0.5,  0.5}, {-0.5,  0.5,  0.5}, {-0.5,  0.5, -0.5},
-                  {-0.5, -0.5, -0.5}, {-0.5,  0.5, -0.5}, { 0.5,  0.5, -0.5}, { 0.5, -0.5, -0.5},
-                  {-0.5, -0.5, -0.5}, { 0.5, -0.5, -0.5}, { 0.5, -0.5,  0.5}, {-0.5, -0.5,  0.5},
-                  { 0.5,  0.5,  0.5}, { 0.5,  0.5, -0.5}, { 0.5, -0.5, -0.5}, { 0.5, -0.5,  0.5},
-                  { 0.5,  0.5,  0.5}, { 0.5, -0.5,  0.5}, {-0.5, -0.5,  0.5}, {-0.5,  0.5,  0.5},
-                  { 0.5,  0.5,  0.5}, {-0.5,  0.5,  0.5}, {-0.5,  0.5, -0.5}, { 0.5,  0.5, -0.5}},
-        draw_order = { 0,  1,  2,  1,  2,  3,
-                       4,  5,  6,  5,  6,  7,
-                       8,  9, 10,  9, 10, 11,
-                      12, 13, 14, 13, 14, 15,
-                      16, 17, 18, 17, 18, 19,
-                      20, 21, 22, 22, 23, 24}
-    }
+
+    -- Create huds
     last_book_page = "book_page_1"
     huds = create_huds()
 
+    -- Create state
+    die = Die.new()
+    car = Car.new()
     set_hud("cab")
 end
 
@@ -142,6 +138,8 @@ end
 
 function love.update(dt)
     current_hud.update(dt)
+    car:update(dt)
+    die:update(dt, car)
 end
 
 function draw_canvas()
