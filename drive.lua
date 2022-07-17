@@ -15,8 +15,15 @@ function drive_load()
     farplane = 50
     nearplane = 0.3
 
+    floor_y = -1
+
     waypoint_range = 10
     distance_between_waypoints = 50
+
+    -- obstacle generation config --
+    min_distance_between_obstacles = 5
+    max_distance_between_obstacles = 20
+    obstacle_range = 0  -- around the current car x-coord at time of creation
 
     -- visuals config --
     background_colour = { 0.91, 0.78, 0.47 }
@@ -61,12 +68,17 @@ function drive_load()
     -- road generation state --
     road = { }
     next_segment_id = 1      -- id to give to new road segments
-    last_road_t = 0          -- when did we last make a new road segment?
+    prev_road_t = 0          -- when did we last make a new road segment?
     road_colours = default_road_colours
 
     current_waypoint = nil
     prev_waypoint_x = 0
     prev_waypoint_z = 0
+
+    -- obstacle generation state --
+    obstacles = { }
+    prev_obstacle_z = 0
+    dist_until_next_obstacle = nil
 
     -- visuals state --
     fog_height = default_fog_height
@@ -92,6 +104,9 @@ function drive_draw()
     -- road
     draw_road()
 
+    -- obstacles
+    draw_obstacles()
+
     -- sky background
     love.graphics.setColor(0, 0, 0)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), horizon)
@@ -108,25 +123,26 @@ function drive_update(dt)
     d = d + (speed * dt)
 
     accelerate(dt)
-
     steer(dt)
-
     move(dt)
 
     set_icy(dt)
-
     set_darkness(dt)
 
     get_hurt(dt)
 
     update_waypoint()
-
     make_road(dt)
+
+    update_obstacles()
 
     if dbg then print() end
 end
 
 --- other stuff ---
+function randfloat(low, high)
+    return (math.random() * (high - low)) + low
+end
 
 function accelerate(dt)
     if love.keyboard.isDown("up") then
@@ -217,7 +233,8 @@ function update_waypoint()
         prev_waypoint_z = d
     elseif (d - prev_waypoint_z) > distance_between_waypoints then
         prev_waypoint_x = current_waypoint or 0
-        current_waypoint = (math.random() * 2 * waypoint_range) - waypoint_range
+        -- current_waypoint = (math.random() * 2 * waypoint_range) - waypoint_range
+        current_waypoint = randfloat(-waypoint_range, waypoint_range)
         prev_waypoint_z = d
     end
 end
@@ -249,12 +266,6 @@ end
 
 function make_segment_waypoints(desired_z)
     local desired_z = desired_z or farplane
-    local spawn_margin = 0
-
-    local current_x = 0
-    if #road > 0 then
-        current_x = road[#road].x
-    end
 
     if current_waypoint == nil then
         update_waypoint()
@@ -266,28 +277,25 @@ function make_segment_waypoints(desired_z)
     local adjustment = total_x_distance_between_waypoints * progress
     local desired_x = prev_waypoint_x + adjustment
 
-    return { x = desired_x, y = -1, z = desired_z, id = get_segment_id() }
+    return { x = desired_x, y = floor_y, z = desired_z, id = get_segment_id() }
 end
 
 function make_segment_wobble(desired_z)
     -- 'globals'
-    -- wobble_accel = 0.2
+    wobble_accel = 0
     wobbliness = 0.3
 
     local desired_z = desired_z or farplane
-    local spawn_margin = 0
 
     local current_x = 0
     if #road > 0 then
         current_x = road[#road].x
     end
 
-    -- wobbliness = wobbliness + (math.random() * 2 * wobble_accel) - wobble_accel
-    local desired_x = current_x + (math.random() * 2 * wobbliness) - wobbliness
+    wobbliness = wobbliness + randfloat(-wobble_accel, wobble_accel)
+    local desired_x = current_x + randfloat(-wobbliness, wobbliness)
 
-    print(desired_x)
-
-    return { x = desired_x, y = -1, z = desired_z, id = get_segment_id() }
+    return { x = desired_x, y = floor_y, z = desired_z, id = get_segment_id() }
 end
 
 function make_segment(desired_z)
@@ -295,10 +303,10 @@ function make_segment(desired_z)
 end
 
 function make_road(dt)
-    if speed > 0 and t - last_road_t <= (1 / speed) then
+    if speed > 0 and t - prev_road_t <= (1 / speed) then
         return
     end
-    last_road_t = t
+    prev_road_t = t
 
     table.insert(road, make_segment())
 end
@@ -371,17 +379,64 @@ function draw_road_dots()
         local col = road_colours[(road[i].id % 2) + 1]
         love.graphics.setColor(col.r, col.g, col.b)
 
-        -- get coords of current & next road segment
         local curr_x = road[i].x
         local curr_z = road[i].z
 
         curr_z = curr_z / farplane
 
-        -- print(curr_x, curr_z)
-
         local curr_x_screen = (curr_x + 1) * love.graphics.getWidth() / 2
         local curr_z_screen = (2 - (curr_z + 1)) * love.graphics.getHeight() / 2
 
         love.graphics.circle("fill", curr_x_screen, curr_z_screen, 10)
+    end
+end
+
+function generate_obstacle_sprite()
+    return nil
+end
+
+function make_obstacle(desired_z)
+    local desired_z = desired_z or farplane
+
+    desired_x = randfloat(-obstacle_range, obstacle_range) + car_x
+
+    print('making an obstacle at ', desired_x, floor_y, desired_z)
+    return { x = desired_x, y = floor_y, z = desired_z, spr = generate_obstacle_sprite() }
+end
+
+function update_obstacles()
+    if dist_until_next_obstacle == nil then
+        dist_until_next_obstacle = randfloat(min_distance_between_obstacles,
+                                             max_distance_between_obstacles)
+    end
+    if (d - prev_obstacle_z) > dist_until_next_obstacle then
+        dist_until_next_obstacle = randfloat(min_distance_between_obstacles,
+                                             max_distance_between_obstacles)
+
+        print('-----')
+        print('d - prev_obstacle_z = ', d - prev_obstacle_z, ' which is greater than ', dist_until_next_obstacle)
+        ob = make_obstacle()
+        prev_obstacle_z = ob.z
+        table.insert(obstacles, ob)
+    end
+end
+
+function draw_obstacles()
+    for i=1,#obstacles do
+        local true_size = 250
+
+        local scaling_factor = nearplane / obstacles[i].z
+
+        -- apply scaling factor to get perspective-corrected x & y coords in world-space
+        -- (ie. [-1, 1])
+        local x_world  = (car_x + obstacles[i].x) * scaling_factor
+
+        local y_world = obstacles[i].y * scaling_factor
+
+        -- turn world-space into screen-space
+        local x_screen = (x_world + 1)  * love.graphics.getWidth() / 2
+        local y_screen = (2 - (y_world + 1)) * love.graphics.getHeight() / 2
+
+        love.graphics.circle("fill", x_screen, y_screen, true_size * scaling_factor)
     end
 end
