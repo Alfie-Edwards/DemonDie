@@ -21,9 +21,20 @@ function drive_load()
     distance_between_waypoints = 50
 
     -- obstacle generation config --
-    min_distance_between_obstacles = 5
-    max_distance_between_obstacles = 20
-    obstacle_range = 0  -- around the current car x-coord at time of creation
+    min_distance_between_obstacles = 2
+    max_distance_between_obstacles = 5
+    obstacle_range = 20  -- around the current car x-coord at time of creation
+    obstacle_types = {
+        rock = { img = love.graphics.newImage("assets/rock.png"),
+                 width = 1500,
+                 height = 1500,
+                 dmg = 10 }
+    }
+
+    obstacle_asset_names = {}
+    for k, _ in pairs(obstacle_types) do
+        table.insert(obstacle_asset_names, k)
+    end
 
     -- visuals config --
     background_colour = { 0.91, 0.78, 0.47 }
@@ -77,7 +88,7 @@ function drive_load()
 
     -- obstacle generation state --
     obstacles = { }
-    prev_obstacle_z = 0
+    d_at_previous_obstacle = 0
     dist_until_next_obstacle = nil
 
     -- visuals state --
@@ -104,9 +115,6 @@ function drive_draw()
     -- road
     draw_road()
 
-    -- obstacles
-    draw_obstacles()
-
     -- sky background
     love.graphics.setColor(0, 0, 0)
     love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), horizon)
@@ -114,6 +122,9 @@ function drive_draw()
     -- fog edge
     local scale_factor = fog_height / fog_img:getHeight()
     love.graphics.draw(fog_img, fog_quad, 0, horizon, 0, 1, scale_factor)
+
+    -- obstacles
+    draw_obstacles()
 end
 
 function drive_update(dt)
@@ -181,6 +192,10 @@ function move(dt)
         end
     end
 
+    for i=#obstacles,1,-1 do
+        obstacles[i].z = obstacles[i].z - (speed * dt)
+    end
+
     -- move sideways, in x (ie. 'turn')
     car_x = car_x + (steer_speed * dt)
 end
@@ -216,7 +231,7 @@ function set_darkness(dt)
 end
 
 function get_hurt(dt)
-    if #road > 0 and math.abs(car_x - road[1].x) > 0.5 then
+    if #road > 0 and math.abs(car_x - road[1].x) > road_width then
         if dbg then print('uh oh') end
         health = health - terrain_damage * dt
     end
@@ -233,7 +248,6 @@ function update_waypoint()
         prev_waypoint_z = d
     elseif (d - prev_waypoint_z) > distance_between_waypoints then
         prev_waypoint_x = current_waypoint or 0
-        -- current_waypoint = (math.random() * 2 * waypoint_range) - waypoint_range
         current_waypoint = randfloat(-waypoint_range, waypoint_range)
         prev_waypoint_z = d
     end
@@ -317,6 +331,14 @@ function init_road()
     end
 end
 
+function world2screen_x(x_world)
+    return (x_world + 1)  * love.graphics.getWidth() / 2
+end
+
+function world2screen_y(y_world)
+    return (2 - (y_world + 1)) * love.graphics.getHeight() / 2
+end
+
 function draw_road()
     for i=1, #road - 1 do
         local col = road_colours[(road[i].id % 2) + 1]
@@ -353,13 +375,13 @@ function draw_road()
         local next_y_world = next_y * next_scale_factor
 
         -- turn world-space into screen-space
-        local curr_left_screen =  (curr_left_world + 1)  * love.graphics.getWidth() / 2
-        local curr_right_screen = (curr_right_world + 1) * love.graphics.getWidth() / 2
-        local next_left_screen =  (next_left_world + 1)  * love.graphics.getWidth() / 2
-        local next_right_screen = (next_right_world + 1) * love.graphics.getWidth() / 2
+        local curr_left_screen =  world2screen_x(curr_left_world)
+        local curr_right_screen = world2screen_x(curr_right_world)
+        local next_left_screen =  world2screen_x(next_left_world)
+        local next_right_screen = world2screen_x(next_right_world)
 
-        local curr_y_screen = (2 - (curr_y_world + 1)) * love.graphics.getHeight() / 2
-        local next_y_screen = (2 - (next_y_world + 1)) * love.graphics.getHeight() / 2
+        local curr_y_screen = world2screen_y(curr_y_world)
+        local next_y_screen = world2screen_y(next_y_world)
 
         -- draw the quad for this road segment
         vertices = {
@@ -384,47 +406,55 @@ function draw_road_dots()
 
         curr_z = curr_z / farplane
 
-        local curr_x_screen = (curr_x + 1) * love.graphics.getWidth() / 2
-        local curr_z_screen = (2 - (curr_z + 1)) * love.graphics.getHeight() / 2
+        local curr_x_screen = world2screen_x(curr_x)
+        local curr_z_screen = world2screen_y(curr_z)
 
         love.graphics.circle("fill", curr_x_screen, curr_z_screen, 10)
     end
 end
 
-function generate_obstacle_sprite()
-    return nil
+function generate_obstacle_kind()
+    return obstacle_asset_names[math.random(1,#obstacle_asset_names)]
 end
 
 function make_obstacle(desired_z)
     local desired_z = desired_z or farplane
 
-    desired_x = randfloat(-obstacle_range, obstacle_range) + car_x
+    local desired_x = randfloat(-obstacle_range, obstacle_range)
+    desired_x = desired_x - car_x
 
-    print('making an obstacle at ', desired_x, floor_y, desired_z)
-    return { x = desired_x, y = floor_y, z = desired_z, spr = generate_obstacle_sprite() }
+    return { x = desired_x, y = floor_y, z = desired_z, kind = generate_obstacle_kind() }
 end
 
 function update_obstacles()
+    -- maybe make new obstacles
     if dist_until_next_obstacle == nil then
         dist_until_next_obstacle = randfloat(min_distance_between_obstacles,
                                              max_distance_between_obstacles)
     end
-    if (d - prev_obstacle_z) > dist_until_next_obstacle then
+    if (d - d_at_previous_obstacle) > dist_until_next_obstacle then
         dist_until_next_obstacle = randfloat(min_distance_between_obstacles,
                                              max_distance_between_obstacles)
 
-        print('-----')
-        print('d - prev_obstacle_z = ', d - prev_obstacle_z, ' which is greater than ', dist_until_next_obstacle)
+        d_at_previous_obstacle = d
         ob = make_obstacle()
-        prev_obstacle_z = ob.z
         table.insert(obstacles, ob)
     end
+
+    -- maybe remove old obstacles
+    for i=#obstacles,1,-1 do
+        if obstacles[i].z < nearplane then
+            table.remove(obstacles, i)
+        end
+    end
+    print(#obstacles)
 end
 
 function draw_obstacles()
-    for i=1,#obstacles do
-        local true_size = 250
-
+    for i=#obstacles,1,-1 do -- iterate backwards for painter's algorithm
+        if obstacles[i].z <= nearplane then
+            goto continue
+        end
         local scaling_factor = nearplane / obstacles[i].z
 
         -- apply scaling factor to get perspective-corrected x & y coords in world-space
@@ -434,9 +464,20 @@ function draw_obstacles()
         local y_world = obstacles[i].y * scaling_factor
 
         -- turn world-space into screen-space
-        local x_screen = (x_world + 1)  * love.graphics.getWidth() / 2
-        local y_screen = (2 - (y_world + 1)) * love.graphics.getHeight() / 2
+        local img = obstacle_types[obstacles[i].kind].img
+        local w_screen = scaling_factor * obstacle_types[obstacles[i].kind].width
+        local h_screen = scaling_factor * obstacle_types[obstacles[i].kind].height
 
-        love.graphics.circle("fill", x_screen, y_screen, true_size * scaling_factor)
+        local x_screen = world2screen_x(x_world) - w_screen / 2
+        local y_screen = world2screen_y(y_world)
+
+        love.graphics.setColor(1, 0, 1)
+        -- love.graphics.circle("fill", x_screen, y_screen, true_size * scaling_factor)
+        love.graphics.draw(obstacle_types[obstacles[i].kind].img,
+                           x_screen, y_screen,
+                           0,
+                           w_screen / img:getWidth(),
+                           h_screen / img:getHeight())
+        ::continue::
     end
 end
