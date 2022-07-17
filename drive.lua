@@ -45,21 +45,11 @@ function drive_load(car)
     -- visuals config --
     ground_colour = { 0.91, 0.78, 0.47 }
 
-    default_road_colours = {
-        { 0.3, 0.3, 0.3 },
-        { 0.3, 0.3, 0.3 }  -- we don't need alternation with road markings
-        -- { 0.6, 0.6, 0.6 },
-    }
+    default_road_colour = { 0.3, 0.3, 0.3 }
 
-    icy_road_colours = {
-        { 0.57, 0.85, 0.90 },
-        { 0.57, 0.85, 0.90 }  -- we don't need alternation with road markings
-        -- { 0.67, 0.90, 0.91 },
-    }
+    icy_road_colour = { 0.57, 0.85, 0.90 }
 
     road_marking_width = 0.1
-
-    horizon = 0 + (canvas_h / 2)  -- just used for adding sky & fog
 
     default_dark_threshold  = 15
     darkness_dark_threshold = 5
@@ -67,8 +57,6 @@ function drive_load(car)
     -- effects config --
     icy_timeout_duration = 0.2
     darkness_timeout_duration = 0.2
-
-    darkness_fog_height = 750
 
     -- other config --
     dbg = true
@@ -81,7 +69,7 @@ function drive_load(car)
     road = { }
     next_segment_id = 1      -- id to give to new road segments
     prev_road_t = 0          -- when did we last make a new road segment?
-    road_colours = default_road_colours
+    road_colour = default_road_colour
 
     current_waypoint = nil
     prev_waypoint_x = 0
@@ -171,12 +159,12 @@ function set_icy(dt)
         is_icy = true
         icy_timeout = icy_timeout_duration
         car.steering_friction = 0
-        road_colours = icy_road_colours
+        road_colour = icy_road_colour
     elseif is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
         is_icy = false
         icy_timeout = icy_timeout_duration
         car.steering_friction = car.default_steering_friction
-        road_colours = default_road_colours
+        road_colour = default_road_colour
     end
 end
 
@@ -418,8 +406,7 @@ function draw_road()
             next_left_screen, next_y_screen
         }
 
-        local col = road_colours[(road[i].id % 2) + 1]
-        love.graphics.setColor(distance_tint(col, curr_z))
+        love.graphics.setColor(distance_tint(road_colour, curr_z))
         love.graphics.polygon("fill", vertices)
 
         if (road[i].id % 2) == 0 then
@@ -451,8 +438,7 @@ end
 
 function draw_road_dots()
     for i=1, #road - 1 do
-        local col = road_colours[(road[i].id % 2) + 1]
-        love.graphics.setColor(col)
+        love.graphics.setColor(road_colour)
 
         local curr_x = road[i].x
         local curr_z = road[i].z
