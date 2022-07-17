@@ -1,6 +1,6 @@
 --- equiv of basic love functions ---
 
-function drive_load()
+function drive_load(car)
     canvas_w = canvas_size[1]
     canvas_h = canvas_size[2]
     -- canvas_w = love.graphics.getWidth()
@@ -9,15 +9,6 @@ function drive_load()
     -----------------------------------------------------
     --- config
     -----------------------------------------------------
-
-    -- car config --
-    start_speed = 10         -- default car speed
-    max_speed = 1000         -- max car speed
-    accel = 1.5              -- acceleration
-    steering = 7             -- steering speed
-    max_turn_rate = 3        -- maximum rate of turn
-    terrain_damage = 10      -- how much damage terrain does
-    default_steering_friction = 2  -- how much steering amount want to return to 0
 
     -- road generation config --
     road_width = 2           -- (is actually half road width, in world coords -1 -> 1)
@@ -82,18 +73,11 @@ function drive_load()
     darkness_fog_height = 750
 
     -- other config --
-    dbg = false
+    dbg = true
 
     -----------------------------------------------------
     --- state
     -----------------------------------------------------
-
-    -- car state --
-    speed = start_speed
-    car_x = 0
-    steer_speed = 0
-    health = 100
-    steering_friction = default_steering_friction
 
     -- road generation state --
     road = { }
@@ -109,9 +93,6 @@ function drive_load()
     obstacles = { }
     d_at_previous_obstacle = 0
     dist_until_next_obstacle = nil
-
-    -- visuals state --
-    -- fog_height = default_fog_height
 
     -- effects state --
     is_icy = false
@@ -141,10 +122,10 @@ function drive_update(dt)
     if dbg then print('--- update ---') end
 
     t = t + dt
-    d = d + (speed * dt)
+    d = d + (car.speed * dt)
 
-    accelerate(dt)
-    steer(dt)
+    car:accelerate(dt)
+    car:steer(dt)
     move(dt)
 
     set_icy(dt)
@@ -169,42 +150,11 @@ function ob_type(i)
     return obstacle_types[obstacles[i].kind]
 end
 
-function accelerate(dt)
-    if love.keyboard.isDown("up") then
-        speed = math.min(speed + accel * dt, max_speed)
-    elseif love.keyboard.isDown("down") then
-        speed = math.max(speed - accel * dt, 0)
-    end
-end
-
-function steer(dt)
-    -- if we're going too slow, we can't steer well
-    local speed_multiplier = 1
-    local speed_multiplier_threshold = start_speed / 2
-    if speed < speed_multiplier_threshold then
-        speed_multiplier = (speed / speed_multiplier_threshold) * steering
-    end
-
-    -- set the current steering speed
-    if love.keyboard.isDown("left") then
-        steer_speed = math.max(steer_speed - steering * dt * speed_multiplier, -max_turn_rate)
-    elseif love.keyboard.isDown("right") then
-        steer_speed = math.min(steer_speed + steering * dt * speed_multiplier, max_turn_rate)
-    end
-
-    -- apply friction to the steering speed
-    if steer_speed > 0 then
-        steer_speed = math.max(steer_speed - (steering_friction * dt), 0)
-    elseif steer_speed < 0 then
-        steer_speed = math.min(steer_speed + (steering_friction * dt), 0)
-    end
-end
-
 function move(dt)
     -- move forwards, in z (just move road backwards)
     local points_behind_nearplane = 0
     for i=#road,1,-1 do
-        road[i].z = road[i].z - (speed * dt)
+        road[i].z = road[i].z - (car.speed * dt)
 
         if road[i].z <= nearplane then
             points_behind_nearplane = points_behind_nearplane + 1
@@ -216,11 +166,11 @@ function move(dt)
     end
 
     for i=#obstacles,1,-1 do
-        obstacles[i].z = obstacles[i].z - (speed * dt)
+        obstacles[i].z = obstacles[i].z - (car.speed * dt)
     end
 
     -- move sideways, in x (ie. 'turn')
-    car_x = car_x + (steer_speed * dt)
+    car.x = car.x + (car.steer_speed * dt)
 end
 
 function set_icy(dt)
@@ -229,12 +179,12 @@ function set_icy(dt)
     if not is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
         is_icy = true
         icy_timeout = icy_timeout_duration
-        steering_friction = 0
+        car.steering_friction = 0
         road_colours = icy_road_colours
     elseif is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
         is_icy = false
         icy_timeout = icy_timeout_duration
-        steering_friction = default_steering_friction
+        car.steering_friction = car.default_steering_friction
         road_colours = default_road_colours
     end
 end
@@ -254,22 +204,22 @@ function set_darkness(dt)
 end
 
 function get_hurt(dt)
-    if #road > 0 and math.abs(car_x - road[1].x) > 1 then
+    if #road > 0 and math.abs(car.x - road[1].x) > 1 then
         if dbg then print('off the road!') end
-        health = health - terrain_damage * dt
+        car.health = car.health - car.terrain_damage * dt
     end
 
     for i=1,#obstacles do
-        if math.abs(car_x - obstacles[i].x) < 1.0 and
+        if math.abs(car.x - obstacles[i].x) < 1.0 and
             math.abs(obstacles[i].z - nearplane) < 0.2 then
-            health = health - ob_type(i).dmg
+            car.health = car.health - ob_type(i).dmg
             if dbg then print('ouch! -- hit a ', obstacles[i].kind) end
             obstacles[i].z = nearplane - 10 -- move away
-            speed = speed - (speed * (ob_type(i).speed_penalty_percent / 100))
+            car.speed = car.speed - (car.speed * (ob_type(i).speed_penalty_percent / 100))
         end
     end
 
-    if health <= 0 then
+    if car.health <= 0 then
         if dbg then print('YOU DEAD') end
     end
 end
@@ -363,7 +313,7 @@ function make_segment(desired_z)
 end
 
 function make_road(dt)
-    if speed > 0 and t - prev_road_t <= (1 / speed) then
+    if car.speed > 0 and t - prev_road_t <= (1 / car.speed) then
         return
     end
     prev_road_t = t
@@ -451,10 +401,10 @@ function draw_road()
 
         -- apply scaling factor to get perspective-corrected x & y coords in world-space
         -- (ie. [-1, 1])
-        local curr_left_world  = ((curr_x - car_x) - road_width) * curr_scale_factor
-        local curr_right_world = ((curr_x - car_x) + road_width) * curr_scale_factor
-        local next_left_world  = ((next_x - car_x) - road_width) * next_scale_factor
-        local next_right_world = ((next_x - car_x) + road_width) * next_scale_factor
+        local curr_left_world  = ((curr_x - car.x) - road_width) * curr_scale_factor
+        local curr_right_world = ((curr_x - car.x) + road_width) * curr_scale_factor
+        local next_left_world  = ((next_x - car.x) - road_width) * next_scale_factor
+        local next_right_world = ((next_x - car.x) + road_width) * next_scale_factor
 
         local curr_y_world = curr_y * curr_scale_factor
         local next_y_world = next_y * next_scale_factor
@@ -483,10 +433,10 @@ function draw_road()
 
         if (road[i].id % 2) == 0 then
             -- draw a road marking
-            local front_left_world  = ((curr_x - car_x) - road_marking_width) * curr_scale_factor
-            local front_right_world = ((curr_x - car_x) + road_marking_width) * curr_scale_factor
-            local back_left_world  = ((next_x - car_x) - road_marking_width) * next_scale_factor
-            local back_right_world = ((next_x - car_x) + road_marking_width) * next_scale_factor
+            local front_left_world  = ((curr_x - car.x) - road_marking_width) * curr_scale_factor
+            local front_right_world = ((curr_x - car.x) + road_marking_width) * curr_scale_factor
+            local back_left_world  = ((next_x - car.x) - road_marking_width) * next_scale_factor
+            local back_right_world = ((next_x - car.x) + road_marking_width) * next_scale_factor
 
             local front_left_screen =  world2screen_x(front_left_world)
             local front_right_screen = world2screen_x(front_right_world)
@@ -534,7 +484,7 @@ function make_obstacle(desired_z)
     local desired_z = desired_z or farplane
 
     local desired_x = randfloat(-obstacle_range, obstacle_range)
-    desired_x = desired_x - car_x
+    desired_x = desired_x - car.x
 
     return { x = desired_x, y = floor_y, z = desired_z, kind = generate_obstacle_kind() }
 end
@@ -571,7 +521,7 @@ function draw_obstacles()
 
         -- apply scaling factor to get perspective-corrected x & y coords in world-space
         -- (ie. [-1, 1])
-        local x_world  = (obstacles[i].x - car_x) * scaling_factor
+        local x_world  = (obstacles[i].x - car.x) * scaling_factor
         local y_world = obstacles[i].y * scaling_factor
 
         -- turn world-space into screen-space

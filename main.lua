@@ -127,12 +127,13 @@ function love.load()
     last_book_page = "book_page_1"
     huds = create_huds()
 
-    -- Create road
-    drive_load()
-
     -- Create state
     die = Die.new()
     car = Car.new()
+
+    -- Create road
+    drive_load(car)
+
     set_hud("cab")
 end
 
