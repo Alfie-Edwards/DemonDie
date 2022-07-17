@@ -22,7 +22,7 @@ function create_huds()
 
             love.graphics.push()
             rotate_about(
-                car.steer_speed / car.max_turn_rate,
+                car:steering_amount() / car.max_turn_rate,
                 60 + images.wheel:getWidth() / 2,
                 90 + images.wheel:getHeight() / 2
             )
@@ -160,9 +160,9 @@ function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0)
 
-    local t = love.math.newTransform()
-    t:translate(0, -25)
-    love.graphics.replaceTransform(t)
+    local road_transform = love.math.newTransform()
+    road_transform:translate(0, -25)
+    love.graphics.replaceTransform(road_transform)
     drive_draw()
     love.graphics.origin()
 

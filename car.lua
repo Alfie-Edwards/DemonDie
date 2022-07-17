@@ -22,9 +22,10 @@ Car = {
 
     -- driving state
     x = 0,
-    steer_speed = 0,
+    steer_speed = 0,                -- amount of steering by user; to include nudges, use `steering_amount()`
     health = 100,
     steering_friction = nil,
+    steering_nudge = 0,
     d = 0,  -- total distance moved
 
 }
@@ -40,6 +41,10 @@ function Car.new()
     return obj
 end
 
+function Car:steering_amount()
+    return self.steer_speed + self.steering_nudge
+end
+
 function Car:update(dt)
     self.last_horn = self.last_horn + dt
     self.last_swerve = self.last_swerve + dt
@@ -52,7 +57,7 @@ function Car:update(dt)
     self:steer(dt)
 
     -- move sideways, in x (ie. 'turn')
-    self.x = self.x + (self.steer_speed * dt)
+    self.x = self.x + (self:steering_amount() * dt)
 end
 
 function Car:update_temperature(dt)

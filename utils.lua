@@ -82,3 +82,7 @@ function concat(a, b)
     table.move(b, 1, #b, #ab + 1, ab)
     return ab
 end
+
+function randfloat(low, high)
+    return (math.random() * (high - low)) + low
+end
