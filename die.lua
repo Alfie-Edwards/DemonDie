@@ -164,6 +164,10 @@ function Die:reroll(dt)
         self.number = math.random(1, 6)
     end
 
+    if (current_hud == huds["back_seats"]) then
+        set_hud("cab")
+    end
+
     print('rerolled die -- number is now ', self.number)
     -- new effect will be done on next update
 end
