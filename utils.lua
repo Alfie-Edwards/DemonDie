@@ -21,6 +21,14 @@ function BoundingBox:contains(x, y)
     return (x >= self.x1 and x < self.x2 and y >= self.y1 and y < self.y2)
 end
 
+function BoundingBox:width()
+    return x2 - x1
+end
+
+function BoundingBox:height()
+    return y2 - y1
+end
+
 function wrap_text(text, font, width)
     local line_begin = 1
     local word_begin = 1

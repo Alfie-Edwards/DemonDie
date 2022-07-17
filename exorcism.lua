@@ -1,3 +1,5 @@
+require "utils"
+
 Exorcism = {
     num_stages = 6,
     stages_complete = 0,
@@ -11,8 +13,13 @@ function Exorcism.new(die)
     local obj = {}
     setmetatable(obj, Exorcism)
     obj.die = die
+    obj.current_stage = create_typing_stage(die.difficulty / die.max_difficulty)
 
     return obj
+end
+
+function Exorcism:begin()
+    
 end
 
 function Exorcism:stage_complete()
@@ -21,7 +28,7 @@ function Exorcism:stage_complete()
         self.die:reset_difficulty()
         self.complete = true
     else
-        current_stage = create_typing_stage(die.difficulty / die.max_difficulty)
+        self.current_stage = create_typing_stage(die.difficulty / die.max_difficulty)
     end
 end
 
@@ -31,11 +38,10 @@ ExorcismStage = {
 }
 ExorcismStage.__index = ExorcismStage
 
-function ExorcismStage.new(type, data)
+function ExorcismStage.new(type)
     local obj = {}
     setmetatable(obj, ExorcismStage)
     obj.type = type
-    obj.data = data
 
     return obj
 end
@@ -44,7 +50,10 @@ function create_typing_stage(difficulty)
     local window_size = math.floor(0.5 * #words)
     local window_start = math.floor((#words - window_size) * difficulty) + 1
     local index = math.random(window_start, window_start + window_size - 1) 
-    return ExorcismStage.new("typing", words[index])
+    local stage = ExorcismStage.new("typing")
+    stage.text = wrap_text(words[index], font, 78)
+    stage.pos = 1
+    return stage
 end
 
 
