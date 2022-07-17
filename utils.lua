@@ -69,3 +69,10 @@ function shuffle_list(list)
     list[i], list[j] = list[j], list[i]
   end
 end
+
+function concat(a, b)
+    local ab = {}
+    table.move(a, 1, #a, 1, ab)
+    table.move(b, 1, #b, #ab + 1, ab)
+    return ab
+end

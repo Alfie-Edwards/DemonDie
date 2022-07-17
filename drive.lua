@@ -11,7 +11,7 @@ function drive_load(car)
     -----------------------------------------------------
 
     -- road generation config --
-    road_width = 3           -- (is actually half road width, in world coords -1 -> 1)
+    road_width = 5           -- (is actually half road width, in world coords -1 -> 1)
     farplane = 50
     nearplane = 0.2
 
@@ -59,7 +59,7 @@ function drive_load(car)
     darkness_timeout_duration = 0.2
 
     -- other config --
-    dbg = true
+    dbg = false
 
     -----------------------------------------------------
     --- state
@@ -110,8 +110,8 @@ function drive_update(dt)
 
     move(dt)
 
-    set_icy(dt)
-    set_darkness(dt)
+    -- dbg_icy(dt)
+    -- dbg_darkness(dt)
 
     get_hurt(dt)
 
@@ -152,34 +152,50 @@ function move(dt)
     end
 end
 
-function set_icy(dt)
+function dbg_icy(dt)
     icy_timeout = icy_timeout - dt
 
     if not is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
-        is_icy = true
-        icy_timeout = icy_timeout_duration
-        car.steering_friction = 0
-        road_colour = icy_road_colour
+        set_icy()
     elseif is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
-        is_icy = false
-        icy_timeout = icy_timeout_duration
-        car.steering_friction = car.default_steering_friction
-        road_colour = default_road_colour
+        unset_icy()
     end
 end
 
-function set_darkness(dt)
+function set_icy()
+    is_icy = true
+    icy_timeout = icy_timeout_duration
+    car.steering_friction = 0
+    road_colour = icy_road_colour
+end
+
+function unset_icy()
+    is_icy = false
+    icy_timeout = icy_timeout_duration
+    car.steering_friction = car.default_steering_friction
+    road_colour = default_road_colour
+end
+
+function dbg_darkness(dt)
     darkness_timeout = darkness_timeout - dt
 
     if not is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
-        is_darkness = true
-        darkness_timeout = darkness_timeout_duration
-        dark_threshold = darkness_dark_threshold
+        set_dark()
     elseif is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
-        is_darkness = false
-        darkness_timeout = darkness_timeout_duration
-        dark_threshold = default_dark_threshold
+        unset_dark()
     end
+end
+
+function set_dark()
+    is_darkness = true
+    darkness_timeout = darkness_timeout_duration
+    dark_threshold = darkness_dark_threshold
+end
+
+function unset_dark()
+    is_darkness = false
+    darkness_timeout = darkness_timeout_duration
+    dark_threshold = default_dark_threshold
 end
 
 function get_hurt(dt)

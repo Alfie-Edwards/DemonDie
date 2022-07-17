@@ -19,7 +19,7 @@ function Exorcism.new(die)
 end
 
 function Exorcism:begin()
-    
+
 end
 
 function Exorcism:stage_complete()
@@ -27,6 +27,7 @@ function Exorcism:stage_complete()
     if (self.stages_complete == self.num_stages) then
         self.die:reset_difficulty()
         self.complete = true
+        self.die:reroll()
     else
         self.current_stage = create_typing_stage(die.difficulty / die.max_difficulty)
     end
@@ -49,7 +50,7 @@ end
 function create_typing_stage(difficulty)
     local window_size = math.floor(0.5 * #words)
     local window_start = math.floor((#words - window_size) * difficulty) + 1
-    local index = math.random(window_start, window_start + window_size - 1) 
+    local index = math.random(window_start, window_start + window_size - 1)
     local stage = ExorcismStage.new("typing")
     stage.text = wrap_text(words[index], font, 78)
     stage.pos = 1
