@@ -120,6 +120,7 @@ end
 function Die:do_effect(dt)
     if (self.number == 1) then
         -- heat up
+        car.heatup_factor = 1.5
     elseif (self.number == 2) then
         set_icy()
     elseif (self.number == 3) then
@@ -135,6 +136,7 @@ end
 
 function Die:remove_effect(dt)
     if (self.number == 1) then
+        car.heatup_factor = 0
     elseif (self.number == 2) then
         unset_icy()
     elseif (self.number == 3) then

@@ -1,5 +1,7 @@
 Car = {
-    ac = false,
+    ac_settings = { "off", "cold", "hot" },
+    ac = "off",
+    ac_power = 1,
     temperature = 20,
     radio_station_index = 1,
     radio_station = nil,
@@ -7,6 +9,8 @@ Car = {
     last_swerve = 0,
     speed = 0,
     radio_stations = {"off", "classic", "metal", "jazz", "country"},
+
+    heatup_factor = 0,
 
     -- driving config
     max_speed = 1000,
@@ -39,11 +43,8 @@ end
 function Car:update(dt)
     self.last_horn = self.last_horn + dt
     self.last_swerve = self.last_swerve + dt
-    if (self.ac) then
-        self.temperature = self.temperature - dt / 6000
-    else
-        self.temperature = self.temperature + dt / 6000
-    end
+
+    self:update_temperature(dt)
 
     self.d = self.d + (self.speed * dt)
 
@@ -52,6 +53,22 @@ function Car:update(dt)
 
     -- move sideways, in x (ie. 'turn')
     self.x = self.x + (self.steer_speed * dt)
+end
+
+function Car:update_temperature(dt)
+    local change = 0
+
+    if self.ac == "cold" then
+        change = -self.ac_power
+    elseif self.ac == "hot" then
+        change = self.ac_power
+    end
+
+    change = (change + self.heatup_factor) * dt
+
+    self.temperature = self.temperature + change
+
+    -- TODO if it gets too hot, you die
 end
 
 function Car:toggle_station()
