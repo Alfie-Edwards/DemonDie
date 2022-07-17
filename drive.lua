@@ -21,9 +21,9 @@ function drive_load(car)
     distance_between_waypoints = 50
 
     -- obstacle generation config --
-    min_distance_between_obstacles = 10
-    max_distance_between_obstacles = 25
-    obstacle_range = 10  -- around the current car x-coord at time of creation
+    default_min_distance_between_obstacles = 10
+    default_max_distance_between_obstacles = 25
+    default_obstacle_range = 10  -- around the current car x-coord at time of creation
     obstacle_types = {
         rock = { img = love.graphics.newImage("assets/rock.png"),
                  width = 250,
@@ -34,8 +34,13 @@ function drive_load(car)
                    width = 150,
                    height = 300,
                    dmg = 5,
-                   speed_penalty_percent = 50 }
+                   speed_penalty_percent = 50 },
     }
+    demonspawn = { img = love.graphics.newImage("assets/demonspawn.png"),
+                   width = 150,
+                   height = 300,
+                   dmg = 10,
+                   speed_penalty_percent = 100 }
 
     obstacle_asset_names = {}
     for k, _ in pairs(obstacle_types) do
@@ -47,16 +52,21 @@ function drive_load(car)
 
     default_road_colour = { 0.3, 0.3, 0.3 }
 
-    icy_road_colour = { 0.57, 0.85, 0.90 }
-
     road_marking_width = 0.1
 
     default_dark_threshold  = 15
-    darkness_dark_threshold = 5
 
     -- effects config --
     icy_timeout_duration = 0.2
     darkness_timeout_duration = 0.2
+
+    icy_road_colour = { 0.57, 0.85, 0.90 }
+
+    darkness_dark_threshold = 5
+
+    demonspawn_min_distance_between_obstacles = 7
+    demonspawn_max_distance_between_obstacles = 15
+    demonspawn_obstacle_range = 7
 
     -- other config --
     dbg = false
@@ -77,6 +87,9 @@ function drive_load(car)
 
     -- obstacle generation state --
     obstacles = { }
+    obstacle_range = default_obstacle_range
+    min_distance_between_obstacles = default_min_distance_between_obstacles
+    max_distance_between_obstacles = default_max_distance_between_obstacles
     d_at_previous_obstacle = 0
     dist_until_next_obstacle = nil
 
@@ -85,6 +98,7 @@ function drive_load(car)
     icy_timeout = 0
     is_darkness = false
     darkness_timeout = 0
+    is_demonspawning = false
 
     dark_threshold = default_dark_threshold
 
@@ -129,7 +143,11 @@ function randfloat(low, high)
 end
 
 function ob_type(i)
-    return obstacle_types[obstacles[i].kind]
+    if obstacles[i].kind == "demonspawn" then
+        return demonspawn
+    else
+        return obstacle_types[obstacles[i].kind]
+    end
 end
 
 function move(dt)
@@ -196,6 +214,20 @@ function unset_dark()
     is_darkness = false
     darkness_timeout = darkness_timeout_duration
     dark_threshold = default_dark_threshold
+end
+
+function set_demonic_obstacles()
+    is_demonspawning = true
+    min_distance_between_obstacles = demonspawn_min_distance_between_obstacles
+    max_distance_between_obstacles = demonspawn_max_distance_between_obstacles
+    obstacle_range = demonspawn_obstacle_range
+end
+
+function unset_demonic_obstacles()
+    is_demonspawning = true
+    min_distance_between_obstacles = default_min_distance_between_obstacles
+    max_distance_between_obstacles = default_max_distance_between_obstacles
+    obstacle_range = default_obstacle_range
 end
 
 function get_hurt(dt)
@@ -470,6 +502,10 @@ function draw_road_dots()
 end
 
 function generate_obstacle_kind()
+    if is_demonspawning and math.random(1, 2) == 1 then
+        return "demonspawn"
+    end
+
     return obstacle_asset_names[math.random(1,#obstacle_asset_names)]
 end
 

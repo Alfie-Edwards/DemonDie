@@ -22,11 +22,6 @@ function Die.new()
 
     obj.starting_number_order = concat(first_three, second_three)
     obj.number = obj.starting_number_order[1]
-    print('generated starting list:')
-    for i=1,#obj.starting_number_order do
-        print('* ', obj.starting_number_order[i])
-    end
-    print('starting die off on ', obj.number)
 
     return obj
 end
@@ -127,6 +122,7 @@ function Die:do_effect(dt)
         set_dark()
     elseif (self.number == 4) then
         -- obstacles
+        set_demonic_obstacles()
     elseif (self.number == 5) then
         -- nudge controls
     elseif (self.number == 6) then
@@ -142,6 +138,7 @@ function Die:remove_effect(dt)
     elseif (self.number == 3) then
         unset_dark()
     elseif (self.number == 4) then
+        unset_demonic_obstacles()
     elseif (self.number == 5) then
     elseif (self.number == 6) then
     end
