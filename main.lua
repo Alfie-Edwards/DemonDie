@@ -11,6 +11,17 @@ function set_hud(name)
     current_hud = huds[name]
 end
 
+function draw_wheel()
+    love.graphics.push()
+    rotate_about(
+        car:steering_amount() / car.max_turn_rate,
+        60 + images.wheel:getWidth() / 2,
+        90 + images.wheel:getHeight() / 2
+    )
+    love.graphics.draw(images.wheel, 60, 90)
+    love.graphics.pop()
+end
+
 function create_huds()
     local huds = {}
 
@@ -19,16 +30,7 @@ function create_huds()
         function()
             love.graphics.draw(images.cab)
             love.graphics.draw(images.book, 160, 137)
-
-            love.graphics.push()
-            rotate_about(
-                car:steering_amount() / car.max_turn_rate,
-                60 + images.wheel:getWidth() / 2,
-                90 + images.wheel:getHeight() / 2
-            )
-            love.graphics.draw(images.wheel, 60, 90)
-            love.graphics.pop()
-
+            draw_wheel()
             love.graphics.draw(images.eye, 240, 11)
             health_bar:draw()
         end
@@ -55,6 +57,14 @@ function create_huds()
             local die_pos = die_positions[die.number]
             love.graphics.draw(images.die[die.number], die_pos[1], die_pos[2])
             love.graphics.draw(images.eye, 80, 11, 0, -1, 1)
+
+            if (die.difficulty < 1) then
+                die_bars[1]:draw()
+            elseif (die.difficulty < 2) then
+                die_bars[2]:draw()
+            else
+                die_bars[3]:draw()
+            end
         end
     )
     huds.back_seats:add_mouse_region(
@@ -64,15 +74,20 @@ function create_huds()
         )
     )
 
-    for i = 1,6,1 do
+    book_text = {
+
+    }
+
+    for i = 1,3,1 do
         local page = Hud.new()
         init_page(page, i)
         huds[page_name(i)] = page
     end
+
     local page_ex = Hud.new()
-    init_page(page_ex, 7)
+    init_page(page_ex, 4)
     set_page_exorcism(page_ex, "right")
-    huds[page_name(7)] = page_ex
+    huds[page_name(4)] = page_ex
 
     return huds
 end
@@ -125,6 +140,11 @@ function love.load()
     die = Die.new()
     car = Car.new()
     health_bar = Bar.new("health", 100, {0.28, 0.57, 0.5}, {0.14, 0.4, 0.34}, {0.96, 0.95, 0.82}, {0, 0, 0})
+    die_bars = {
+        Bar.new("demonic presence (lvl I)", 1, {0.48, 0.09, 0.09}, {0.28, 0.07, 0.07}, {1, 0.3, 0}, {1, 1, 1}),
+        Bar.new("demonic presence (lvl II)", 1, {0.58, 0.10, 0.10}, {0.38, 0.08, 0.08}, {1, 0.3, 0}, {1, 1, 1}),
+        Bar.new("demonic presence (lvl III)", 1, {0.68, 0.11, 0.11}, {0.48, 0.09, 0.09}, {1, 0.3, 0}, {1, 1, 1}),
+    }
 
     -- Create road
     drive_load(car)
@@ -145,6 +165,14 @@ end
 function love.update(dt)
     drive_update(dt)
     health_bar:set(car.health)
+    die_bars[1]:set(die.difficulty)
+    die_bars[2]:set(die.difficulty - 1)
+    die_bars[3]:set(die.difficulty - 2)
+    if (die.difficulty == die.max_difficulty) then
+        die_bars[3].name = "demonic presence (lvl ?????????????????)"
+    else
+        die_bars[3].name = "demonic presence (lvl III)"
+    end
     current_hud:update(dt)
     car:update(dt)
     die:update(dt, car)

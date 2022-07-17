@@ -1,7 +1,7 @@
 require "utils"
 require "hud"
 
-num_pages = 7
+num_pages = 4
 book_bb = BoundingBox.new(72, 36, 248, 163)
 left_bb = BoundingBox.new(78, 46, 156, 156)
 right_bb = BoundingBox.new(164, 46, 242, 156)
@@ -42,7 +42,7 @@ end
 function set_page_exorcism(page, side)
     local start_exorcism_mr = MouseRegion.new()
     local bb = get_bb(side)
-    start_exorcism_mr.bounding_box = bb
+    start_exorcism_mr.bounding_box = BoundingBox.new(bb.x1, bb.y1+12, bb.x2, bb.y2-30)
     start_exorcism_mr.click_func = function()
         current_exorcism = Exorcism.new(die)
         page:remove_mouse_region(start_exorcism_mr)
@@ -123,6 +123,7 @@ function init_page(page, num)
     page:add_draw_func(
         function()
             love.graphics.draw(images.cab)
+            draw_wheel()
             love.graphics.draw(images.book_open, book_bb.x1, book_bb.y1)
             if (num ~= 1) then
                 love.graphics.draw(images.page_arrow, 90, 151, 0, -1, 1)
@@ -130,10 +131,10 @@ function init_page(page, num)
             if (num ~= num_pages) then
                 love.graphics.draw(images.page_arrow, 229, 151)
             end
+            health_bar:draw()
         end
     )
 
-    set_page_text(page, "left", page_name(num))
     page:add_update_func(
         function(dt)
             last_book_page = page_name(num)
