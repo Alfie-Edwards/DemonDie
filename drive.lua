@@ -1,6 +1,15 @@
 --- equiv of basic love functions ---
 
 function drive_load()
+    canvas_w = canvas_size[1]
+    canvas_h = canvas_size[2]
+    -- canvas_w = love.graphics.getWidth()
+    -- canvas_h = love.graphics.getHeight()
+
+    -----------------------------------------------------
+    --- config
+    -----------------------------------------------------
+
     -- car config --
     start_speed = 10         -- default car speed
     max_speed = 1000         -- max car speed
@@ -13,7 +22,7 @@ function drive_load()
     -- road generation config --
     road_width = 2           -- (is actually half road width, in world coords -1 -> 1)
     farplane = 50
-    nearplane = 0.3
+    nearplane = 0.2
 
     floor_y = -1
 
@@ -28,9 +37,15 @@ function drive_load()
     obstacle_range = 10  -- around the current car x-coord at time of creation
     obstacle_types = {
         rock = { img = love.graphics.newImage("assets/rock.png"),
-                 width = 500,
-                 height = 500,
-                 dmg = 10 }
+                 width = 250,
+                 height = 250,
+                 dmg = 10,
+                 speed_penalty_percent = 100 },
+        cactus = { img = love.graphics.newImage("assets/cactus.png"),
+                   width = 150,
+                   height = 300,
+                   dmg = 5,
+                   speed_penalty_percent = 50 }
     }
 
     obstacle_asset_names = {}
@@ -39,7 +54,8 @@ function drive_load()
     end
 
     -- visuals config --
-    background_colour = { 0.91, 0.78, 0.47 }
+    ground_colour = { 0.91, 0.78, 0.47 }
+    -- ground_colour = { r = 0.91, g = 0.78, b = 0.47 }
 
     default_road_colours = {
         { r = 0.3, g = 0.3, b = 0.3 },
@@ -55,16 +71,10 @@ function drive_load()
 
     road_marking_width = 0.1
 
-    horizon = 0 + (love.graphics.getHeight() / 2)  -- just used for adding sky & fog
+    horizon = 0 + (canvas_h / 2)  -- just used for adding sky & fog
 
-    default_fog_height = 100
-    fog_img = love.graphics.newImage('assets/fog fade.png')
-    fog_img:setWrap('repeat', 'clamp')
-    fog_quad = love.graphics.newQuad(
-        0, 0,
-        love.graphics.getWidth(), fog_img:getHeight(),
-        fog_img:getWidth(), fog_img:getHeight()
-    )
+    default_dark_threshold  = 15
+    darkness_dark_threshold = 5
 
     -- effects config --
     icy_timeout_duration = 0.2
@@ -74,6 +84,10 @@ function drive_load()
 
     -- other config --
     dbg = false
+
+    -----------------------------------------------------
+    --- state
+    -----------------------------------------------------
 
     -- car state --
     speed = start_speed
@@ -98,13 +112,15 @@ function drive_load()
     dist_until_next_obstacle = nil
 
     -- visuals state --
-    fog_height = default_fog_height
+    -- fog_height = default_fog_height
 
     -- effects state --
     is_icy = false
     icy_timeout = 0
     is_darkness = false
     darkness_timeout = 0
+
+    dark_threshold = default_dark_threshold
 
     -- other state --
     t = 0                    -- time since start
@@ -115,22 +131,11 @@ function drive_load()
 end
 
 function drive_draw()
-    -- bg
-    love.graphics.setBackgroundColor(background_colour)
-
-    -- road
+    draw_ground()
     draw_road()
-
-    -- sky background
-    love.graphics.setColor(0, 0, 0)
-    love.graphics.rectangle("fill", 0, 0, love.graphics.getWidth(), horizon)
-
-    -- fog edge
-    local scale_factor = fog_height / fog_img:getHeight()
-    love.graphics.draw(fog_img, fog_quad, 0, horizon, 0, 1, scale_factor)
-
-    -- obstacles
     draw_obstacles()
+
+    love.graphics.setColor(1, 1, 1)
 end
 
 function drive_update(dt)
@@ -241,11 +246,11 @@ function set_darkness(dt)
     if not is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
         is_darkness = true
         darkness_timeout = darkness_timeout_duration
-        fog_height = darkness_fog_height
+        dark_threshold = darkness_dark_threshold
     elseif is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
         is_darkness = false
         darkness_timeout = darkness_timeout_duration
-        fog_height = default_fog_height
+        dark_threshold = default_dark_threshold
     end
 end
 
@@ -261,7 +266,7 @@ function get_hurt(dt)
             health = health - ob_type(i).dmg
             if dbg then print('ouch! -- hit a ', obstacles[i].kind) end
             obstacles[i].z = nearplane - 10 -- move away
-            speed = 0
+            speed = speed - (speed * (ob_type(i).speed_penalty_percent / 100))
         end
     end
 
@@ -374,18 +379,57 @@ function init_road()
 end
 
 function world2screen_x(x_world)
-    return (x_world + 1)  * love.graphics.getWidth() / 2
+    return (x_world + 1)  * canvas_w / 2
 end
 
 function world2screen_y(y_world)
-    return (2 - (y_world + 1)) * love.graphics.getHeight() / 2
+    return (2 - (y_world + 1)) * canvas_h / 2
+end
+
+function distance_tint(col, z)
+    local factor = 0
+
+    if z < dark_threshold then
+        factor = 1 - (z / (dark_threshold))
+    end
+
+    local res = { }
+    for k, v in pairs(col) do
+        res[k] = v * factor
+    end
+    return res
+end
+
+function draw_ground()
+    local steps = 50
+    local inc = (farplane - nearplane) / steps
+
+    for i=0,steps - 1 do
+        local world_front = nearplane + (i * inc)
+        local world_back  = world_front + inc
+
+        local world_y = floor_y
+        local world_y_front = world_y * (nearplane / world_front)
+        local world_y_back  = world_y * (nearplane / world_back)
+
+        local screen_y_front = world2screen_y(world_y_front)
+        local screen_y_back = world2screen_y(world_y_back)
+
+        local vertices = {
+            0,        screen_y_front,
+            canvas_w, screen_y_front,
+            canvas_w, screen_y_back,
+            0,        screen_y_back
+        }
+
+        love.graphics.setColor(distance_tint(ground_colour, world_front))
+        love.graphics.polygon("fill", vertices)
+        love.graphics.setColor(1, 1, 1)
+    end
 end
 
 function draw_road()
     for i=1, #road - 1 do
-        local col = road_colours[(road[i].id % 2) + 1]
-        love.graphics.setColor(col.r, col.g, col.b)
-
         -- get coords of current & next road segment
         local curr_x = road[i].x
         local curr_y = road[i].y
@@ -426,7 +470,7 @@ function draw_road()
         local next_y_screen = world2screen_y(next_y_world)
 
         -- draw the trapezoid for this road segment
-        vertices = {
+        local vertices = {
             curr_left_screen, curr_y_screen,
             curr_right_screen, curr_y_screen,
 
@@ -434,6 +478,9 @@ function draw_road()
             next_left_screen, next_y_screen
         }
 
+        local col = road_colours[(road[i].id % 2) + 1]
+        -- love.graphics.setColor(col.r, col.g, col.b)
+        love.graphics.setColor(distance_tint({col.r, col.g, col.b}, curr_z))
         love.graphics.polygon("fill", vertices)
 
         if (road[i].id % 2) == 0 then
@@ -448,7 +495,7 @@ function draw_road()
             local back_left_screen =  world2screen_x(back_left_world)
             local back_right_screen = world2screen_x(back_right_world)
 
-            vertices = {
+            local vertices = {
                 front_left_screen, curr_y_screen,
                 front_right_screen, curr_y_screen,
 
@@ -456,16 +503,18 @@ function draw_road()
                 back_left_screen, next_y_screen
             }
 
-            love.graphics.setColor(1, 1, 1)
+            love.graphics.setColor(distance_tint({1, 1, 1}, curr_z))
             love.graphics.polygon("fill", vertices)
         end
     end
+    love.graphics.setColor(1, 1, 1)
 end
 
 function draw_road_dots()
     for i=1, #road - 1 do
         local col = road_colours[(road[i].id % 2) + 1]
-        love.graphics.setColor(col.r, col.g, col.b)
+        -- love.graphics.setColor(col.r, col.g, col.b)
+        love.graphics.setColor({col.r, col.g, col.b})
 
         local curr_x = road[i].x
         local curr_z = road[i].z
@@ -477,6 +526,7 @@ function draw_road_dots()
 
         love.graphics.circle("fill", curr_x_screen, curr_z_screen, 10)
     end
+    love.graphics.setColor(1, 1, 1)
 end
 
 function generate_obstacle_kind()
@@ -534,13 +584,14 @@ function draw_obstacles()
         local x_screen = world2screen_x(x_world) - w_screen / 2
         local y_screen = world2screen_y(y_world) - h_screen
 
-        love.graphics.setColor(1, 0, 1)
         local img = ob_type(i).img
+        love.graphics.setColor(distance_tint({1, 1, 1}, obstacles[i].z))
         love.graphics.draw(img,
                            x_screen, y_screen,
                            0,
                            w_screen / img:getWidth(),
                            h_screen / img:getHeight())
+        love.graphics.setColor(1, 1, 1)
         ::continue::
     end
 end

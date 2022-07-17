@@ -4,6 +4,8 @@ require "exorcism"
 require "die"
 require "car"
 
+require "drive"
+
 function set_hud(name)
     current_hud = huds[name]
 end
@@ -125,6 +127,9 @@ function love.load()
     last_book_page = "book_page_1"
     huds = create_huds()
 
+    -- Create road
+    drive_load()
+
     -- Create state
     die = Die.new()
     car = Car.new()
@@ -137,6 +142,7 @@ function love.mousepressed(x, y, button)
 end
 
 function love.update(dt)
+    drive_update(dt)
     current_hud.update(dt)
     car:update(dt)
     die:update(dt, car)
@@ -150,7 +156,8 @@ end
 
 function love.draw()
     love.graphics.setCanvas(canvas)
-    love.graphics.clear(0, 0.125, 0.333)
+    love.graphics.clear(0, 0, 0)
+    drive_draw()
     current_hud.draw()
     draw_canvas()
 end
