@@ -1,7 +1,7 @@
 require "utils"
 require "hud"
 
-num_pages = 4
+num_pages = 5
 book_bb = BoundingBox.new(72, 36, 248, 163)
 left_bb = BoundingBox.new(78, 46, 156, 156)
 right_bb = BoundingBox.new(164, 46, 242, 156)

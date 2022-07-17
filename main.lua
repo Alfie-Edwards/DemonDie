@@ -75,19 +75,44 @@ function create_huds()
     )
 
     book_text = {
-
+        {
+            "I: ",
+            "I: "
+        },
+        {
+            "I: ",
+            "I: "
+        },
+        {
+            "I: ",
+            "I: "
+        },
     }
+    local page_int = Hud.new()
+    init_page(page_int, 1)
+    set_page_text(
+        page_int,
+        "left",
+        "\n\n  GRIMOIRE OF THE\n     DEMON DIE\n\nDemon Dice can be extrmely dangerous, and must handled properly.The most important rule is to never let them out of your sight.\n\nDemon Dice, must have their power regularly sealed using incantations.")
+    set_page_text(
+        page_int,
+        "right",
+        "The section at the back of this book will guide you through the incantation process.\n\nDemon Dice take on different personalities depending on their orientation. These are all detailed in this book. An uncomfortable Die will need to have its power sealed more often.")
+    huds[page_name(1)] = page_int
 
     for i = 1,3,1 do
         local page = Hud.new()
-        init_page(page, i)
-        huds[page_name(i)] = page
+        local page_num = i + 1
+        init_page(page, page_num)
+        huds[page_name(page_num)] = page
+        set_page_text(page, "left", book_text[i][1])
+        set_page_text(page, "right", book_text[i][2])
     end
 
     local page_ex = Hud.new()
-    init_page(page_ex, 4)
+    init_page(page_ex, 5)
     set_page_exorcism(page_ex, "right")
-    huds[page_name(4)] = page_ex
+    huds[page_name(5)] = page_ex
 
     return huds
 end
