@@ -22,11 +22,11 @@ function BoundingBox:contains(x, y)
 end
 
 function BoundingBox:width()
-    return x2 - x1
+    return self.x2 - self.x1
 end
 
 function BoundingBox:height()
-    return y2 - y1
+    return self.y2 - self.y1
 end
 
 function wrap_text(text, font, width)

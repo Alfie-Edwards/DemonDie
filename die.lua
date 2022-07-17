@@ -43,6 +43,6 @@ end
 
 function Die:update(dt, car)
     local difficulty_multiplier = self:get_difficulty_multiplier(car)
-    self.difficulty = self.difficulty + (dt * difficulty_multiplier / self.base_seconds_per_level)
+    self.difficulty = math.min(self.max_difficulty, self.difficulty + (dt * difficulty_multiplier / self.base_seconds_per_level))
     self:do_effect(dt)
 end

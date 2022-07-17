@@ -40,6 +40,8 @@ function create_huds()
     huds.back_seats:add_draw_func(
         function() 
             love.graphics.draw(images.back_seats)
+            local die_pos = die_positions[die.number]
+            love.graphics.draw(images.die[die.number], die_pos[1], die_pos[2])
             love.graphics.draw(images.eye, 80, 11, 0, -1, 1)
         end
     )
@@ -84,6 +86,22 @@ function love.load()
         book = love.graphics.newImage("assets/book.png"),
         page_arrow = love.graphics.newImage("assets/page_arrow.png"),
         begin_ritual = love.graphics.newImage("assets/begin_ritual.png"),
+        die = {
+            love.graphics.newImage("assets/die_I.png"),
+            love.graphics.newImage("assets/die_II.png"),
+            love.graphics.newImage("assets/die_III.png"),
+            love.graphics.newImage("assets/die_IV.png"),
+            love.graphics.newImage("assets/die_V.png"),
+            love.graphics.newImage("assets/die_VI.png"),
+        }
+    }
+    die_positions = {
+        {20, 90},
+        {210, 90},
+        {250, 90},
+        {100, 90},
+        {60, 90},
+        {180, 90},
     }
 
     -- Create huds

@@ -31,13 +31,18 @@ function set_page_text(page, side, text)
     )
 end
 
+function get_bb(side)
+    if (side == "left") then
+        return left_bb
+    else
+        return right_bb
+    end
+end
+
 function set_page_exorcism(page, side)
     local start_exorcism_mr = MouseRegion.new()
-    if (side == "left") then
-        start_exorcism_mr.bounding_box = left_bb
-    else
-        start_exorcism_mr.bounding_box = right_bb
-    end
+    local bb = get_bb(side)
+    start_exorcism_mr.bounding_box = bb
     start_exorcism_mr.click_func = function()
         current_exorcism = Exorcism.new(die)
         page:remove_mouse_region(start_exorcism_mr)
@@ -89,10 +94,16 @@ function set_page_exorcism(page, side)
             return
         end
         if (stage.type == "typing") then
+            local w = font:getWidth(stage.text)
+            local _, lines = stage.text:gsub("\n","")
+            local h = lines * font:getLineHeight()
+            local x = (bb:width() - w) / 2
+            local y = -6 + (bb:height() - h) / 2
             love.graphics.print(
                 {{0.41, 0.4, 0.39}, stage.text:sub(0,stage.pos-1),
                  {0.48, 0.09, 0.09}, stage.text:sub(stage.pos,stage.pos),
-                 {0.81, 0.8, 0.79}, stage.text:sub(stage.pos+1)})
+                 {0.81, 0.8, 0.79}, stage.text:sub(stage.pos+1)},
+                x, y)
         end
     end
 
