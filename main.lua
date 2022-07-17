@@ -6,6 +6,8 @@ require "car"
 require "page"
 require "bar"
 require "drive"
+require "deathscreen"
+require "startscreen"
 
 function set_hud(name)
     current_hud = huds[name]
@@ -192,9 +194,12 @@ function love.load()
     huds = create_huds()
 
     is_flipped = false
+    death_screen = nil
+    start_screen = StartScreen:new()
 
     -- Create state
     car = Car.new()
+    drive_load(car)
     die = Die.new()
 
     health_bar = Bar.new("health", 100, {0.28, 0.57, 0.5}, {0.14, 0.4, 0.34}, {0.96, 0.95, 0.82}, {0, 0, 0})
@@ -203,9 +208,6 @@ function love.load()
         Bar.new("demonic presence (lvl II)", 1, {0.58, 0.10, 0.10}, {0.38, 0.08, 0.08}, {1, 0.3, 0}, {1, 1, 1}),
         Bar.new("demonic presence (lvl III)", 1, {0.68, 0.11, 0.11}, {0.48, 0.09, 0.09}, {1, 0.3, 0}, {1, 1, 1}),
     }
-
-    -- Create road
-    drive_load(car)
 
     set_hud("cab")
     current_exorcism = nil
@@ -233,6 +235,14 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.update(dt)
+    if start_screen ~= nil then
+        if love.keyboard.isDown("space") then
+            start_screen = nil
+        end
+    elseif death_screen ~= nil then
+        return
+    end
+
     drive_update(dt)
     health_bar:set(car.health)
     die_bars[1]:set(die.difficulty)
@@ -246,6 +256,10 @@ function love.update(dt)
     current_hud:update(dt)
     car:update(dt)
     die:update(dt, car)
+
+    if car.health <= 0 and death_screen == nil then
+        death_screen = DeathScreen:new(car.died_from, car.d)
+    end
 end
 
 function draw_canvas()
@@ -263,21 +277,28 @@ function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0)
 
-    if is_flipped then
+    if start_screen ~= nil then
+        start_screen:draw()
+    elseif death_screen ~= nil then
+        death_screen:draw()
+    else
+        if is_flipped then
+            love.graphics.push()
+            love.graphics.scale(-1, 1)
+            love.graphics.translate(-canvas_w, 0)
+        end
+
         love.graphics.push()
-        love.graphics.scale(-1, 1)
-        love.graphics.translate(-canvas_w, 0)
-    end
-
-    love.graphics.push()
-    love.graphics.translate(0, -25)
-    drive_draw()
-    love.graphics.pop()
-
-    current_hud:draw()
-
-    if is_flipped then
+        love.graphics.translate(0, -25)
+        drive_draw()
         love.graphics.pop()
+
+        current_hud:draw()
+
+        if is_flipped then
+            love.graphics.pop()
+        end
+
     end
 
     draw_canvas()

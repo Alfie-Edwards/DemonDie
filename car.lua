@@ -11,9 +11,12 @@ Car = {
     radio_stations = {"off", "classic", "metal", "jazz", "country"},
 
     heatup_factor = 0,
+    temperature_damage = 15,
+
+    died_from = nil,
 
     -- driving config
-    max_speed = 1000,
+    max_speed = 15,
     accel = 1.5,
     steering = 7,                   -- steering speed
     max_turn_rate = 3,
@@ -45,11 +48,23 @@ function Car:steering_amount()
     return self.steer_speed + self.steering_nudge
 end
 
+function Car:hurt(amount, kind)
+    self.health = math.max(self.health - amount, 0)
+
+    if self.health == 0 and self.died_from == nil then
+        self.died_from = kind
+    end
+end
+
 function Car:update(dt)
     self.last_horn = self.last_horn + dt
     self.last_swerve = self.last_swerve + dt
 
     self:update_temperature(dt)
+
+    if self.temperature > 45 then
+        self:hurt(self.temperature_damage * dt, "cook")
+    end
 
     self.d = self.d + (self.speed * dt)
 

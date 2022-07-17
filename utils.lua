@@ -86,3 +86,8 @@ end
 function randfloat(low, high)
     return (math.random() * (high - low)) + low
 end
+
+function draw_centred_text(text, y)
+    love.graphics.draw(text, (canvas_w - text:getWidth()) / 2, y)
+end
+
