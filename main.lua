@@ -6,6 +6,7 @@ require "car"
 require "page"
 require "bar"
 require "drive"
+require "deathscreen"
 
 function set_hud(name)
     current_hud = huds[name]
@@ -162,6 +163,8 @@ function love.load()
     huds = create_huds()
 
     is_flipped = false
+    -- is_dead = false
+    death_screen = nil
 
     -- Create state
     car = Car.new()
@@ -203,6 +206,10 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.update(dt)
+    if death_screen ~= nil then
+        return
+    end
+
     drive_update(dt)
     health_bar:set(car.health)
     die_bars[1]:set(die.difficulty)
@@ -216,6 +223,10 @@ function love.update(dt)
     current_hud:update(dt)
     car:update(dt)
     die:update(dt, car)
+
+    if car.health <= 0 and death_screen == nil then
+        death_screen = DeathScreen:new(car.died_from, car.d)
+    end
 end
 
 function draw_canvas()
@@ -233,21 +244,26 @@ function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0)
 
-    if is_flipped then
+    if death_screen ~= nil then
+        death_screen:draw()
+    else
+        if is_flipped then
+            love.graphics.push()
+            love.graphics.scale(-1, 1)
+            love.graphics.translate(-canvas_w, 0)
+        end
+
         love.graphics.push()
-        love.graphics.scale(-1, 1)
-        love.graphics.translate(-canvas_w, 0)
-    end
-
-    love.graphics.push()
-    love.graphics.translate(0, -25)
-    drive_draw()
-    love.graphics.pop()
-
-    current_hud:draw()
-
-    if is_flipped then
+        love.graphics.translate(0, -25)
+        drive_draw()
         love.graphics.pop()
+
+        current_hud:draw()
+
+        if is_flipped then
+            love.graphics.pop()
+        end
+
     end
 
     draw_canvas()

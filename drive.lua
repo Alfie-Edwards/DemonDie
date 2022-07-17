@@ -243,21 +243,19 @@ end
 function get_hurt(dt)
     if #road > 0 and math.abs(car.x - road[1].x) > road_width then
         if dbg then print('off the road!') end
-        car.health = car.health - car.terrain_damage * dt
+        -- car.health = car.health - car.terrain_damage * dt
+        car:hurt(car.terrain_damage * dt, "offroad")
     end
 
     for i=1,#obstacles do
         if math.abs(car.x - obstacles[i].x) < 1.0 and
             math.abs(obstacles[i].z - nearplane) < 0.2 then
-            car.health = car.health - ob_type(i).dmg
+            -- car.health = car.health - ob_type(i).dmg
+            car:hurt(ob_type(i).dmg, "crash")
             if dbg then print('ouch! -- hit a ', obstacles[i].kind) end
             obstacles[i].z = nearplane - 10 -- move far away to be culled
             car.speed = car.speed - (car.speed * (ob_type(i).speed_penalty_percent / 100))
         end
-    end
-
-    if car.health <= 0 then
-        if dbg then print('YOU DEAD') end
     end
 end
 
