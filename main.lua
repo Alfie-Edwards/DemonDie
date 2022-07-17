@@ -157,7 +157,13 @@ end
 function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0)
+
+    local t = love.math.newTransform()
+    t:translate(0, -25)
+    love.graphics.replaceTransform(t)
     drive_draw()
+    love.graphics.origin()
+
     current_hud.draw()
     draw_canvas()
 end
