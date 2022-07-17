@@ -1,3 +1,5 @@
+require "utils"
+
 DeathScreen = {
     crash_text = "You crashed!",
     offroad_text = "You totaled your car offroad!",
@@ -10,10 +12,6 @@ DeathScreen = {
     score_text = nil,
 }
 DeathScreen.__index = DeathScreen
-
-function draw_centred(text, y)
-    love.graphics.draw(text, (canvas_w - text:getWidth()) / 2, y)
-end
 
 function DeathScreen:new(cause, score)
     local obj = {}
@@ -40,7 +38,7 @@ function DeathScreen:new(cause, score)
 end
 
 function DeathScreen:draw()
-    draw_centred(self.cause_text, (canvas_h / 2) - 10)
-    draw_centred(self.score_text, (canvas_h / 2) + 10)
+    draw_centred_text(self.cause_text, (canvas_h / 2) - 10)
+    draw_centred_text(self.score_text, (canvas_h / 2) + 10)
 end
 

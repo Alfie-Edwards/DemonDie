@@ -7,6 +7,7 @@ require "page"
 require "bar"
 require "drive"
 require "deathscreen"
+require "startscreen"
 
 function set_hud(name)
     current_hud = huds[name]
@@ -163,8 +164,8 @@ function love.load()
     huds = create_huds()
 
     is_flipped = false
-    -- is_dead = false
     death_screen = nil
+    start_screen = StartScreen:new()
 
     -- Create state
     car = Car.new()
@@ -206,7 +207,11 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.update(dt)
-    if death_screen ~= nil then
+    if start_screen ~= nil then
+        if love.keyboard.isDown("space") then
+            start_screen = nil
+        end
+    elseif death_screen ~= nil then
         return
     end
 
@@ -244,7 +249,9 @@ function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0)
 
-    if death_screen ~= nil then
+    if start_screen ~= nil then
+        start_screen:draw()
+    elseif death_screen ~= nil then
         death_screen:draw()
     else
         if is_flipped then
