@@ -17,9 +17,7 @@ function drive_load(car)
 
     floor_y = -1
 
-    waypoint_range = 10
-    max_waypoint_deviation = 3  -- how far apart in x can two waypoints be? (just a clamp)
-    waypoint_wobbliness = 3
+    waypoint_wobbliness = 4
     distance_between_waypoints = 50
 
     -- obstacle generation config --
@@ -207,7 +205,7 @@ function get_hurt(dt)
             math.abs(obstacles[i].z - nearplane) < 0.2 then
             car.health = car.health - ob_type(i).dmg
             if dbg then print('ouch! -- hit a ', obstacles[i].kind) end
-            obstacles[i].z = nearplane - 10 -- move away
+            obstacles[i].z = nearplane - 10 -- move far away to be culled
             car.speed = car.speed - (car.speed * (ob_type(i).speed_penalty_percent / 100))
         end
     end
@@ -315,7 +313,7 @@ function make_road(dt)
 end
 
 function init_road()
-    for i=1,farplane do
+    for i=0,farplane do
         table.insert(road, make_segment(i))
     end
 end
