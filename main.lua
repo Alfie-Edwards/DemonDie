@@ -29,6 +29,7 @@ function create_huds()
     huds.cab:add_draw_func(
         function()
             love.graphics.draw(images.cab)
+            love.graphics.print({{1, 1, 1, 0.6}, tostring(math.floor(car.temperature)).."c\n"..car.radio_station}, 155, 117)
             love.graphics.draw(images.book, 160, 137)
             draw_wheel()
             love.graphics.draw(images.eye, 240, 11)
@@ -47,6 +48,30 @@ function create_huds()
         MouseRegion.new(
             BoundingBox.new(162, 140, 215, 180),
             function() set_hud(last_book_page) end
+        )
+    )
+    huds.cab:add_mouse_region(
+        MouseRegion.new(
+            BoundingBox.new(152, 142, 154, 156),
+            function() car.ac = "cold" end
+        )
+    )
+    huds.cab:add_mouse_region(
+        MouseRegion.new(
+            BoundingBox.new(156, 142, 158, 156),
+            function() car.ac = "off" end
+        )
+    )
+    huds.cab:add_mouse_region(
+        MouseRegion.new(
+            BoundingBox.new(160, 142, 162, 156),
+            function() car.ac = "hot" end
+        )
+    )
+    huds.cab:add_mouse_region(
+        MouseRegion.new(
+            BoundingBox.new(151, 135, 155, 140),
+            function() car:toggle_station() end
         )
     )
 

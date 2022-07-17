@@ -59,7 +59,7 @@ function Die:get_difficulty_multiplier(car)
             diff_down()
         end
         -- hates classical
-        if car.radio_station == "classical" then
+        if car.radio_station == "classic" then
             diff_up()
         end
     elseif (self.number == 2) then
@@ -73,7 +73,7 @@ function Die:get_difficulty_multiplier(car)
         end
     elseif (self.number == 3) then
         -- likes classical
-        if car.radio_station == "classical" then
+        if car.radio_station == "classic" then
             diff_down()
         end
         -- hates extreme temperatures
@@ -104,7 +104,7 @@ function Die:get_difficulty_multiplier(car)
             diff_down()
         end
         -- hates classical
-        if car.radio_station == "classical" then
+        if car.radio_station == "classic" then
             diff_up()
         end
     end
