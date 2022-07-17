@@ -1,7 +1,7 @@
 require "utils"
 
 Exorcism = {
-    num_stages = 6,
+    num_stages = 1,
     stages_complete = 0,
     current_stage = nil,
     die = nil,
@@ -50,9 +50,14 @@ end
 function create_typing_stage(difficulty)
     local window_size = math.floor(0.5 * #words)
     local window_start = math.floor((#words - window_size) * difficulty) + 1
-    local index = math.random(window_start, window_start + window_size - 1)
+
+    local index1 = math.random(window_start, window_start + window_size - 1)
+    local index2 = math.random(window_start, window_start + window_size - 1)
+    local index3 = math.random(window_start, window_start + window_size - 1)
+    local text = words[index1].." "..words[index2].." "..words[index3]
+
     local stage = ExorcismStage.new("typing")
-    stage.text = wrap_text(words[index], font, 78)
+    stage.text = wrap_text(text, font, 78)
     stage.pos = 1
     return stage
 end

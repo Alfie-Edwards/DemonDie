@@ -18,6 +18,7 @@ function create_huds()
     huds.cab:add_draw_func(
         function()
             love.graphics.draw(images.cab)
+            love.graphics.draw(images.book, 160, 137)
 
             love.graphics.push()
             rotate_about(
@@ -41,7 +42,7 @@ function create_huds()
     )
     huds.cab:add_mouse_region(
         MouseRegion.new(
-            BoundingBox.new(162, 136, 215, 180),
+            BoundingBox.new(162, 140, 215, 180),
             function() set_hud(last_book_page) end
         )
     )
