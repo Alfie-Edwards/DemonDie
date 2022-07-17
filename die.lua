@@ -7,7 +7,7 @@ Die = {
     base_seconds_per_level = 30,
 
     starting_number_order = { },
-    idx = 1
+    idx = 0
 }
 Die.__index = Die
 
@@ -21,7 +21,7 @@ function Die.new()
     shuffle_list(second_three)
 
     obj.starting_number_order = concat(first_three, second_three)
-    obj.number = obj.starting_number_order[1]
+    obj:reroll()
 
     return obj
 end
@@ -112,7 +112,7 @@ function Die:get_difficulty_multiplier(car)
     return difficulty_multiplier
 end
 
-function Die:do_effect(dt)
+function Die:apply_effect(dt)
     if (self.number == 1) then
         -- heat up
         car.heatup_factor = 1.5
@@ -127,7 +127,8 @@ function Die:do_effect(dt)
         -- nudge controls
         set_nudging()
     elseif (self.number == 6) then
-        -- view effects
+        -- flipped view
+        set_flipped()
     end
 end
 
@@ -143,13 +144,13 @@ function Die:remove_effect(dt)
     elseif (self.number == 5) then
         unset_nudging()
     elseif (self.number == 6) then
+        unset_flipped()
     end
 end
 
 function Die:update(dt, car)
     local difficulty_multiplier = self:get_difficulty_multiplier(car)
     self.difficulty = math.min(self.max_difficulty, self.difficulty + (dt * difficulty_multiplier / self.base_seconds_per_level))
-    self:do_effect(dt)
 end
 
 function Die:reroll(dt)
@@ -167,6 +168,5 @@ function Die:reroll(dt)
         set_hud("cab")
     end
 
-    print('rerolled die -- number is now ', self.number)
-    -- new effect will be done on next update
+    self:apply_effect(dt)
 end

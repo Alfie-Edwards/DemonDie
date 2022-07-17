@@ -52,7 +52,7 @@ function create_huds()
 
     huds.back_seats = Hud.new()
     huds.back_seats:add_draw_func(
-        function() 
+        function()
             love.graphics.draw(images.back_seats)
             local die_pos = die_positions[die.number]
             love.graphics.draw(images.die[die.number], die_pos[1], die_pos[2])
@@ -136,9 +136,12 @@ function love.load()
     last_book_page = "book_page_1"
     huds = create_huds()
 
+    is_flipped = false
+
     -- Create state
-    die = Die.new()
     car = Car.new()
+    die = Die.new()
+
     health_bar = Bar.new("health", 100, {0.28, 0.57, 0.5}, {0.14, 0.4, 0.34}, {0.96, 0.95, 0.82}, {0, 0, 0})
     die_bars = {
         Bar.new("demonic presence (lvl I)", 1, {0.48, 0.09, 0.09}, {0.28, 0.07, 0.07}, {1, 0.3, 0}, {1, 1, 1}),
@@ -153,9 +156,21 @@ function love.load()
     current_exorcism = nil
 end
 
+function set_flipped()
+    is_flipped = true
+end
+
+function unset_flipped()
+    is_flipped = false
+end
+
 function love.mousepressed(x, y, button)
-   canvas_x, canvas_y = screen_to_canvas(x, y)
-   current_hud:click(canvas_x, canvas_y, button)
+    if is_flipped then
+        x = love.graphics.getWidth() - x
+    end
+
+    canvas_x, canvas_y = screen_to_canvas(x, y)
+    current_hud:click(canvas_x, canvas_y, button)
 end
 
 function love.keypressed(key, scancode, isrepeat)
@@ -179,21 +194,36 @@ function love.update(dt)
 end
 
 function draw_canvas()
+    love.graphics.push()
+    love.graphics.origin()
+
     local x_offset, y_offset, scale = canvas_position()
     love.graphics.setCanvas()
     love.graphics.draw(canvas, x_offset, y_offset, 0, scale, scale)
+
+    love.graphics.pop()
 end
 
 function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0)
 
-    local road_transform = love.math.newTransform()
-    road_transform:translate(0, -25)
-    love.graphics.replaceTransform(road_transform)
+    if is_flipped then
+        love.graphics.push()
+        love.graphics.scale(-1, 1)
+        love.graphics.translate(-canvas_w, 0)
+    end
+
+    love.graphics.push()
+    love.graphics.translate(0, -25)
     drive_draw()
-    love.graphics.origin()
+    love.graphics.pop()
 
     current_hud:draw()
+
+    if is_flipped then
+        love.graphics.pop()
+    end
+
     draw_canvas()
 end

@@ -590,7 +590,5 @@ function update_nudge()
     local amount = randfloat(-nudge_range, nudge_range)
     car.steering_nudge = amount
 
-    print('set steering nudge to', car.steering_nudge)
-
     t_last_nudge = t
 end
