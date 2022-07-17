@@ -169,6 +169,7 @@ function love.load()
 
     -- Create state
     car = Car.new()
+    drive_load(car)
     die = Die.new()
 
     health_bar = Bar.new("health", 100, {0.28, 0.57, 0.5}, {0.14, 0.4, 0.34}, {0.96, 0.95, 0.82}, {0, 0, 0})
@@ -177,9 +178,6 @@ function love.load()
         Bar.new("demonic presence (lvl II)", 1, {0.58, 0.10, 0.10}, {0.38, 0.08, 0.08}, {1, 0.3, 0}, {1, 1, 1}),
         Bar.new("demonic presence (lvl III)", 1, {0.68, 0.11, 0.11}, {0.48, 0.09, 0.09}, {1, 0.3, 0}, {1, 1, 1}),
     }
-
-    -- Create road
-    drive_load(car)
 
     set_hud("cab")
     current_exorcism = nil

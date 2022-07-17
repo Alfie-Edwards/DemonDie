@@ -63,14 +63,14 @@ function drive_load(car)
 
     icy_road_colour = { 0.57, 0.85, 0.90 }
 
-    darkness_dark_threshold = 5
+    darkness_dark_threshold = 3
 
     demonspawn_min_distance_between_obstacles = 7
     demonspawn_max_distance_between_obstacles = 15
     demonspawn_obstacle_range = 7
 
     seconds_per_nudge = 5
-    nudge_range = 1.5
+    max_nudge_range = 3
 
     -- other config --
     dbg = false
@@ -105,6 +105,7 @@ function drive_load(car)
     is_demonspawning = false
     is_nudging = false
     t_last_nudge = 0
+    nudge_range = 0
 
     -- visuals state --
     dark_threshold = default_dark_threshold
@@ -171,20 +172,20 @@ function move(dt)
     end
 end
 
-function dbg_icy(dt)
-    icy_timeout = icy_timeout - dt
+-- function dbg_icy(dt)
+--     icy_timeout = icy_timeout - dt
 
-    if not is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
-        set_icy()
-    elseif is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
-        unset_icy()
-    end
-end
+--     if not is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
+--         set_icy()
+--     elseif is_icy and icy_timeout < 0 and love.keyboard.isDown("space") then
+--         unset_icy()
+--     end
+-- end
 
-function set_icy()
+function set_icy(icyness)
     is_icy = true
     icy_timeout = icy_timeout_duration
-    car.steering_friction = 0
+    car.steering_friction = car.default_steering_friction * (1 - icyness)
     road_colour = icy_road_colour
 end
 
@@ -195,20 +196,20 @@ function unset_icy()
     road_colour = default_road_colour
 end
 
-function dbg_darkness(dt)
-    darkness_timeout = darkness_timeout - dt
+-- function dbg_darkness(dt)
+--     darkness_timeout = darkness_timeout - dt
 
-    if not is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
-        set_dark()
-    elseif is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
-        unset_dark()
-    end
-end
+--     if not is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
+--         set_dark()
+--     elseif is_darkness and darkness_timeout < 0 and love.keyboard.isDown("d") then
+--         unset_dark()
+--     end
+-- end
 
-function set_dark()
+function set_dark(darkness)
     is_darkness = true
     darkness_timeout = darkness_timeout_duration
-    dark_threshold = darkness_dark_threshold
+    dark_threshold = default_dark_threshold - (default_dark_threshold - darkness_dark_threshold) * darkness
 end
 
 function unset_dark()
@@ -217,10 +218,11 @@ function unset_dark()
     dark_threshold = default_dark_threshold
 end
 
-function set_demonic_obstacles()
+function set_demonic_obstacles(scale)
     is_demonspawning = true
     min_distance_between_obstacles = demonspawn_min_distance_between_obstacles
-    max_distance_between_obstacles = demonspawn_max_distance_between_obstacles
+    max_distance_between_obstacles = demonspawn_max_distance_between_obstacles -
+        (max_distance_between_obstacles - min_distance_between_obstacles) * scale
     obstacle_range = demonspawn_obstacle_range
 end
 
@@ -231,8 +233,10 @@ function unset_demonic_obstacles()
     obstacle_range = default_obstacle_range
 end
 
-function set_nudging()
+function set_nudging(scale)
     is_nudging = true
+    nudge_range = scale * max_nudge_range
+
 end
 
 function unset_nudging()

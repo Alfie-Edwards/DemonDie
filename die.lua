@@ -4,7 +4,7 @@ Die = {
     number = 1,
     difficulty = 0,
     max_difficulty = 3,
-    base_seconds_per_level = 30,
+    base_seconds_per_level = 10,
 
     starting_number_order = { },
     idx = 0
@@ -44,7 +44,7 @@ function Die:get_difficulty_multiplier(car)
         return car.last_horn < 3
     end
     function is_going_fast()
-        return car.speed > 13
+        return car.speed > 10
     end
     function is_hot()
         return car.temperature > 30
@@ -113,19 +113,21 @@ function Die:get_difficulty_multiplier(car)
 end
 
 function Die:apply_effect(dt)
+    local diff_ratio = self.difficulty / self.max_difficulty;
+
     if (self.number == 1) then
         -- heat up
-        car.heatup_factor = 1.5
+        car.heatup_factor = 2 * diff_ratio
     elseif (self.number == 2) then
-        set_icy()
+        set_icy(diff_ratio)
     elseif (self.number == 3) then
-        set_dark()
+        set_dark(diff_ratio)
     elseif (self.number == 4) then
         -- obstacles
-        set_demonic_obstacles()
+        set_demonic_obstacles(diff_ratio)
     elseif (self.number == 5) then
         -- nudge controls
-        set_nudging()
+        set_nudging(diff_ratio)
     elseif (self.number == 6) then
         -- flipped view
         set_flipped()
@@ -151,6 +153,7 @@ end
 function Die:update(dt, car)
     local difficulty_multiplier = self:get_difficulty_multiplier(car)
     self.difficulty = math.min(self.max_difficulty, self.difficulty + (dt * difficulty_multiplier / self.base_seconds_per_level))
+    self:apply_effect(dt)
 end
 
 function Die:reroll(dt)
@@ -163,6 +166,7 @@ function Die:reroll(dt)
     else
         self.number = math.random(1, 6)
     end
+    self.number = 5
 
     if (current_hud == huds["back_seats"]) then
         set_hud("cab")

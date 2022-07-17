@@ -16,7 +16,7 @@ Car = {
     died_from = nil,
 
     -- driving config
-    max_speed = 1000,
+    max_speed = 15,
     accel = 1.5,
     steering = 7,                   -- steering speed
     max_turn_rate = 3,
