@@ -5,7 +5,7 @@ function drive_load()
     start_speed = 10         -- default car speed
     max_speed = 1000         -- max car speed
     accel = 1.5              -- acceleration
-    steering = 4             -- steering speed
+    steering = 7             -- steering speed
     max_turn_rate = 3        -- maximum rate of turn
     terrain_damage = 10      -- how much damage terrain does
     default_steering_friction = 2  -- how much steering amount want to return to 0
@@ -18,16 +18,18 @@ function drive_load()
     floor_y = -1
 
     waypoint_range = 10
+    max_waypoint_deviation = 3  -- how far apart in x can two waypoints be? (just a clamp)
+    waypoint_wobbliness = 3
     distance_between_waypoints = 50
 
     -- obstacle generation config --
-    min_distance_between_obstacles = 2
-    max_distance_between_obstacles = 5
-    obstacle_range = 20  -- around the current car x-coord at time of creation
+    min_distance_between_obstacles = 10
+    max_distance_between_obstacles = 25
+    obstacle_range = 10  -- around the current car x-coord at time of creation
     obstacle_types = {
         rock = { img = love.graphics.newImage("assets/rock.png"),
-                 width = 1500,
-                 height = 1500,
+                 width = 500,
+                 height = 500,
                  dmg = 10 }
     }
 
@@ -155,6 +157,10 @@ function randfloat(low, high)
     return (math.random() * (high - low)) + low
 end
 
+function ob_type(i)
+    return obstacle_types[obstacles[i].kind]
+end
+
 function accelerate(dt)
     if love.keyboard.isDown("up") then
         speed = math.min(speed + accel * dt, max_speed)
@@ -164,12 +170,21 @@ function accelerate(dt)
 end
 
 function steer(dt)
-    if love.keyboard.isDown("left") then
-        steer_speed = math.max(steer_speed + steering * dt, -max_turn_rate)
-    elseif love.keyboard.isDown("right") then
-        steer_speed = math.min(steer_speed - steering * dt, max_turn_rate)
+    -- if we're going too slow, we can't steer well
+    local speed_multiplier = 1
+    local speed_multiplier_threshold = start_speed / 2
+    if speed < speed_multiplier_threshold then
+        speed_multiplier = (speed / speed_multiplier_threshold) * steering
     end
 
+    -- set the current steering speed
+    if love.keyboard.isDown("left") then
+        steer_speed = math.max(steer_speed - steering * dt * speed_multiplier, -max_turn_rate)
+    elseif love.keyboard.isDown("right") then
+        steer_speed = math.min(steer_speed + steering * dt * speed_multiplier, max_turn_rate)
+    end
+
+    -- apply friction to the steering speed
     if steer_speed > 0 then
         steer_speed = math.max(steer_speed - (steering_friction * dt), 0)
     elseif steer_speed < 0 then
@@ -231,9 +246,19 @@ function set_darkness(dt)
 end
 
 function get_hurt(dt)
-    if #road > 0 and math.abs(car_x - road[1].x) > road_width then
-        if dbg then print('uh oh') end
+    if #road > 0 and math.abs(car_x - road[1].x) > 1 then
+        if dbg then print('off the road!') end
         health = health - terrain_damage * dt
+    end
+
+    for i=1,#obstacles do
+        if math.abs(car_x - obstacles[i].x) < 1.0 and
+            math.abs(obstacles[i].z - nearplane) < 0.2 then
+            health = health - ob_type(i).dmg
+            if dbg then print('ouch! -- hit a ', obstacles[i].kind) end
+            obstacles[i].z = nearplane - 10 -- move away
+            speed = 0
+        end
     end
 
     if health <= 0 then
@@ -247,9 +272,13 @@ function update_waypoint()
         current_waypoint = 0
         prev_waypoint_z = d
     elseif (d - prev_waypoint_z) > distance_between_waypoints then
-        prev_waypoint_x = current_waypoint or 0
-        current_waypoint = randfloat(-waypoint_range, waypoint_range)
+        local temp_prev_wpt = current_waypoint or 0
+
+        current_waypoint = temp_prev_wpt + randfloat(-waypoint_wobbliness,
+                                                     waypoint_wobbliness)
+
         prev_waypoint_z = d
+        prev_waypoint_x = temp_prev_wpt
     end
 end
 
@@ -285,6 +314,7 @@ function make_segment_waypoints(desired_z)
         update_waypoint()
     end
 
+    -- interpolate with an easing function to the next waypoint
     local fraction_z_distance_moved = (d - prev_waypoint_z) / distance_between_waypoints
     local progress = ease_quad(fraction_z_distance_moved)
     local total_x_distance_between_waypoints = current_waypoint - prev_waypoint_x
@@ -308,6 +338,14 @@ function make_segment_wobble(desired_z)
 
     wobbliness = wobbliness + randfloat(-wobble_accel, wobble_accel)
     local desired_x = current_x + randfloat(-wobbliness, wobbliness)
+
+    return { x = desired_x, y = floor_y, z = desired_z, id = get_segment_id() }
+end
+
+function make_segment_straight(desired_z)
+    local desired_x = 0
+
+    local desired_z = desired_z or farplane
 
     return { x = desired_x, y = floor_y, z = desired_z, id = get_segment_id() }
 end
@@ -366,10 +404,10 @@ function draw_road()
 
         -- apply scaling factor to get perspective-corrected x & y coords in world-space
         -- (ie. [-1, 1])
-        local curr_left_world  = ((car_x + curr_x) - road_width) * curr_scale_factor
-        local curr_right_world = ((car_x + curr_x) + road_width) * curr_scale_factor
-        local next_left_world  = ((car_x + next_x) - road_width) * next_scale_factor
-        local next_right_world = ((car_x + next_x) + road_width) * next_scale_factor
+        local curr_left_world  = ((curr_x - car_x) - road_width) * curr_scale_factor
+        local curr_right_world = ((curr_x - car_x) + road_width) * curr_scale_factor
+        local next_left_world  = ((next_x - car_x) - road_width) * next_scale_factor
+        local next_right_world = ((next_x - car_x) + road_width) * next_scale_factor
 
         local curr_y_world = curr_y * curr_scale_factor
         local next_y_world = next_y * next_scale_factor
@@ -447,7 +485,6 @@ function update_obstacles()
             table.remove(obstacles, i)
         end
     end
-    print(#obstacles)
 end
 
 function draw_obstacles()
@@ -459,21 +496,19 @@ function draw_obstacles()
 
         -- apply scaling factor to get perspective-corrected x & y coords in world-space
         -- (ie. [-1, 1])
-        local x_world  = (car_x + obstacles[i].x) * scaling_factor
-
+        local x_world  = (obstacles[i].x - car_x) * scaling_factor
         local y_world = obstacles[i].y * scaling_factor
 
         -- turn world-space into screen-space
-        local img = obstacle_types[obstacles[i].kind].img
-        local w_screen = scaling_factor * obstacle_types[obstacles[i].kind].width
-        local h_screen = scaling_factor * obstacle_types[obstacles[i].kind].height
+        local w_screen = scaling_factor * ob_type(i).width
+        local h_screen = scaling_factor * ob_type(i).height
 
         local x_screen = world2screen_x(x_world) - w_screen / 2
-        local y_screen = world2screen_y(y_world)
+        local y_screen = world2screen_y(y_world) - h_screen
 
         love.graphics.setColor(1, 0, 1)
-        -- love.graphics.circle("fill", x_screen, y_screen, true_size * scaling_factor)
-        love.graphics.draw(obstacle_types[obstacles[i].kind].img,
+        local img = ob_type(i).img
+        love.graphics.draw(img,
                            x_screen, y_screen,
                            0,
                            w_screen / img:getWidth(),
