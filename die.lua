@@ -4,7 +4,7 @@ Die = {
     number = 1,
     difficulty = 0,
     max_difficulty = 3,
-    base_seconds_per_level = 10,
+    base_seconds_per_level = 20,
 
     starting_number_order = { },
     idx = 0
@@ -113,12 +113,14 @@ function Die:get_difficulty_multiplier(car)
 end
 
 function Die:apply_effect(dt)
-    local diff_ratio = self.difficulty / self.max_difficulty;
+    -- Difficulty has 4 stages (0->1, 1->2, 2->3, and 3)
+    local diff_ratio = math.floor(self.difficulty) / self.max_difficulty;
 
     if (self.number == 1) then
         -- heat up
         car.heatup_factor = 2 * diff_ratio
     elseif (self.number == 2) then
+        car.heatup_factor = -0.5 * diff_ratio
         set_icy(diff_ratio)
     elseif (self.number == 3) then
         set_dark(diff_ratio)
@@ -138,6 +140,7 @@ function Die:remove_effect(dt)
     if (self.number == 1) then
         car.heatup_factor = 0
     elseif (self.number == 2) then
+        car.heatup_factor = 0
         unset_icy()
     elseif (self.number == 3) then
         unset_dark()
@@ -152,7 +155,11 @@ end
 
 function Die:update(dt, car)
     local difficulty_multiplier = self:get_difficulty_multiplier(car)
-    self.difficulty = math.min(self.max_difficulty, self.difficulty + (dt * difficulty_multiplier / self.base_seconds_per_level))
+
+    -- Lvl 0->1 takes n seconds, 1->2 takes 2n seconds, 2->3 takes 3n seconds.
+    local seconds_per_level = self.base_seconds_per_level * (math.floor(self.difficulty) + 1)
+
+    self.difficulty = math.min(self.max_difficulty, self.difficulty + (dt * difficulty_multiplier / seconds_per_level))
     self:apply_effect(dt)
 end
 

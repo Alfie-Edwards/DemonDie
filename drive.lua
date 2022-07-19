@@ -183,10 +183,15 @@ end
 -- end
 
 function set_icy(icyness)
+    if (icyness == 0) then
+        unset_icy()
+        return
+    end
     is_icy = true
     icy_timeout = icy_timeout_duration
     car.steering_friction = car.default_steering_friction * (1 - icyness)
-    road_colour = icy_road_colour
+
+    road_colour = lerp_list(default_road_colour, icy_road_colour, icyness)
 end
 
 function unset_icy()

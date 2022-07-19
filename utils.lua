@@ -91,3 +91,25 @@ function draw_centred_text(text, y)
     love.graphics.draw(text, (canvas_w - text:getWidth()) / 2, y)
 end
 
+function clamp(x, min, max)
+    x = math.min(x, max)
+    x = math.max(x, min)
+    return x
+end
+
+function lerp(a, b, ratio)
+    ratio = clamp(ratio, 0, 1)
+    return a * (1 - ratio) + b * ratio
+end
+
+function lerp_list(a, b, ratio)
+    if (#a ~= #b) then
+        error("lerp_list requires lists of equal length ("..tostring(#a).." != "..tostring(#b)..")")
+    end
+    local result = {}
+    for i, a_item in ipairs(a) do
+        b_item = b[i]
+        result[i] = lerp(a_item, b_item, ratio)
+    end
+    return result
+end

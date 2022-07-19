@@ -104,7 +104,7 @@ function create_huds()
     book_text = {
         {
             "\n\n      FACE I:\n\nThis face is passionate and hot-headed. It loves loud noises and extreme heat.\n\nWhat ever you do, do not play it classical music.",
-            "\n\n       FACE II:\n\nThis face hates distraction more than anything. Try to provide silence, and stillness."
+            "\n\n       FACE II:\n\nThis face has a rather cold personality. It hates to disturbed.\n\nTry to provide silence, and stillness."
         },
         {
             "\n\n      FACE III:\n\nThis face can be difficult as it is very particular. It likes a dark environment, with a moderate temperature.\n\n If it seems unhappy, try playing some classical music.",
