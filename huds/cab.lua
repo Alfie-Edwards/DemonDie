@@ -50,6 +50,12 @@ function create_cab()
             function() car:toggle_station() end
         )
     )
+    cab:add_mouse_region(
+        MouseRegion.new(
+            BoundingBox.new(95, 124, 103, 132),
+            function() car:beep() end
+        )
+    )
 
     return cab
 end
