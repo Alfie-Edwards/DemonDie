@@ -87,8 +87,21 @@ function randfloat(low, high)
     return (math.random() * (high - low)) + low
 end
 
-function draw_centred_text(text, y)
-    love.graphics.draw(text, (canvas_w - text:getWidth()) / 2, y)
+function draw_centred_text(text, y, color, line_spacing)
+    color = color or {1, 1, 1}
+    if (type(text) == "table") then
+        line_spacing = line_spacing or 0
+        for _,line in ipairs(text) do
+            draw_centred_text(line, y, color)
+            y = y + font:getLineHeight() + font:getHeight() + line_spacing
+        end
+    elseif (type(text) == "love.graphics.Text") then
+        local x = (canvas_size[1] - text:getWidth()) / 2
+        love.graphics.draw(text, x, y)
+    else
+        local x = (canvas_size[1] - font:getWidth(text)) / 2
+        love.graphics.print({color, text}, x, y)
+    end
 end
 
 function clamp(x, min, max)

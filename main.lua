@@ -1,150 +1,43 @@
 require "utils"
-require "hud"
 require "exorcism"
 require "die"
 require "car"
-require "page"
 require "bar"
 require "drive"
-require "deathscreen"
-require "startscreen"
+require "hud"
+require "huds/back_seats"
+require "huds/cab"
+require "huds/page"
+require "huds/start_screen"
+require "huds/death_screen"
+
+print("test")
 
 function set_hud(name)
+    print("set hud to "..name.." ("..tostring(huds[name])..")")
     current_hud = huds[name]
 end
 
-function draw_wheel()
-    love.graphics.push()
-    rotate_about(
-        car:steering_amount() / car.max_turn_rate,
-        60 + images.wheel:getWidth() / 2,
-        90 + images.wheel:getHeight() / 2
-    )
-    love.graphics.draw(images.wheel, 60, 90)
-    love.graphics.pop()
+function set_hud_to_death_screen(cause, score)
+    huds.death_screen = create_death_screen(cause, score)
+    set_hud("death_screen")
+end
+
+function set_hud_to_last_book_page()
+    set_hud(last_book_page)
 end
 
 function create_huds()
     local huds = {}
 
-    huds.cab = Hud.new()
-    huds.cab:add_draw_func(
-        function()
-            love.graphics.draw(images.cab)
-            love.graphics.print({{1, 1, 1, 0.6}, car:get_temperature_string().."\n"..car:get_radio_station_string()}, 155, 117)
-            love.graphics.draw(images.book, 160, 137)
-            draw_wheel()
-            love.graphics.draw(images.eye, 240, 11)
-            health_bar:draw()
-        end
-    )
-    huds.cab:add_mouse_region(
-        MouseRegion.new(
-            BoundingBox.new(240, 11, 298, 33),
-            function()
-                set_hud("back_seats")
-            end
-        )
-    )
-    huds.cab:add_mouse_region(
-        MouseRegion.new(
-            BoundingBox.new(163, 140, 216, 180),
-            function() set_hud(last_book_page) end
-        )
-    )
-    huds.cab:add_mouse_region(
-        MouseRegion.new(
-            BoundingBox.new(152, 142, 155, 156),
-            function() car.ac = "cold" end
-        )
-    )
-    huds.cab:add_mouse_region(
-        MouseRegion.new(
-            BoundingBox.new(156, 142, 159, 156),
-            function() car.ac = "off" end
-        )
-    )
-    huds.cab:add_mouse_region(
-        MouseRegion.new(
-            BoundingBox.new(160, 142, 163, 156),
-            function() car.ac = "hot" end
-        )
-    )
-    huds.cab:add_mouse_region(
-        MouseRegion.new(
-            BoundingBox.new(151, 135, 155, 140),
-            function() car:toggle_station() end
-        )
-    )
+    huds.cab = create_cab()
+    huds.back_seats = create_back_seats()
+    huds.start_screen = create_start_screen()
+    huds.death_screen = nil
 
-    huds.back_seats = Hud.new()
-    huds.back_seats:add_draw_func(
-        function()
-            love.graphics.draw(images.back_seats)
-            local die_pos = die_positions[die.number]
-            love.graphics.draw(images.die[die.number], die_pos[1], die_pos[2])
-            love.graphics.draw(images.eye, 80, 11, 0, -1, 1)
-
-            if (die.difficulty < 1) then
-                die_bars[1]:draw()
-            elseif (die.difficulty < 2) then
-                die_bars[2]:draw()
-            else
-                die_bars[3]:draw()
-            end
-        end
-    )
-    huds.back_seats:add_mouse_region(
-        MouseRegion.new(
-            BoundingBox.new(22, 11, 80, 33),
-            function() set_hud("cab") end
-        )
-    )
-
-    book_text = {
-        {
-            "\n\n      FACE I:\n\nThis face is passionate and hot-headed. It loves loud noises and extreme heat.\n\nWhat ever you do, do not play it classical music.",
-            "\n\n       FACE II:\n\nThis face has a rather cold personality. It hates to disturbed.\n\nTry to provide silence, and stillness."
-        },
-        {
-            "\n\n      FACE III:\n\nThis face can be difficult as it is very particular. It likes a dark environment, with a moderate temperature.\n\n If it seems unhappy, try playing some classical music.",
-            "\n\n       FACE IV:\n\nThis face is a thrill seeker. Unhelpfully, it has a tendency create dangerous situations. Just do your best to keep it entertained.\n\nFor whatever reason it despises country music."
-        },
-        {
-            "\n\n      FACE V:\n\nThis face is best described as nervous, and has a tendency to lash out if it feels threatened.\n\nKeep it in a cool place and avoid loud noises.",
-            "\n\n       FACE VI:\n\nThis troublesome face somewhat of a prankster.\n\nPlaying Jazz seems to keep it preoccupied, but avoid classical music."
-        },
-    }
-    local page_int = Hud.new()
-    init_page(page_int, 1)
-    set_page_text(
-        page_int,
-        "left",
-        "\n\n  GRIMOIRE OF THE\n     DEMON DIE\n\nDemon Dice can be extrmely dangerous, and must handled properly.The most important rule is to never let them out of your sight.\n\nDemon Dice, must have their power regularly sealed using incantations.")
-    set_page_text(
-        page_int,
-        "right",
-        "The section at the back of this book will guide you through the incantation process.\nAn uncomfortable Die will need its power sealing more often. Demon Dice take on different characters (faces), with different needs, depending on their orientation. These are detailed in this book.")
-    huds[page_name(1)] = page_int
-
-    for i = 1,3,1 do
-        local page = Hud.new()
-        local page_num = i + 1
-        init_page(page, page_num)
-        huds[page_name(page_num)] = page
-        set_page_text(page, "left", book_text[i][1])
-        set_page_text(page, "right", book_text[i][2])
+    for number = 1,num_pages,1 do
+        huds[page_name(number)] = create_page(number)
     end
-
-    local page_ex = Hud.new()
-    init_page(page_ex, 5)
-    set_page_text(
-        page_ex,
-        "left",
-        "\n\n      SEALING\n    INCANTATION\n\n\nIf a Demon Die in your posession begins causing too much trouble, recite the incantation on the next page to seal away its power."
-    )
-    set_page_exorcism(page_ex, "right")
-    huds[page_name(5)] = page_ex
 
     return huds
 end
@@ -192,10 +85,9 @@ function love.load()
     -- Create huds
     last_book_page = "book_page_1"
     huds = create_huds()
+    set_hud("start_screen")
 
     is_flipped = false
-    death_screen = nil
-    start_screen = StartScreen:new()
 
     -- Create state
     car = Car.new()
@@ -209,7 +101,6 @@ function love.load()
         Bar.new("demonic presence (lvl III)", 1, {0.68, 0.11, 0.11}, {0.48, 0.09, 0.09}, {1, 0.3, 0}, {1, 1, 1}),
     }
 
-    set_hud("cab")
     current_exorcism = nil
 end
 
@@ -235,11 +126,9 @@ function love.keypressed(key, scancode, isrepeat)
 end
 
 function love.update(dt)
-    if start_screen ~= nil then
-        if love.keyboard.isDown("space") then
-            start_screen = nil
-        end
-    elseif death_screen ~= nil then
+    -- Pause at start screen
+    if (current_hud == huds.start_screen or
+        current_hud == huds.death_screen) then
         return
     end
 
@@ -257,8 +146,8 @@ function love.update(dt)
     car:update(dt)
     die:update(dt, car)
 
-    if car.health <= 0 and death_screen == nil then
-        death_screen = DeathScreen:new(car.died_from, car.d)
+    if car.health <= 0 and current_hud ~= huds.death_screen then
+        set_hud_to_death_screen(car.died_from, car.d)
     end
 end
 

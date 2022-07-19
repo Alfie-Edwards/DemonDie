@@ -175,7 +175,7 @@ function Die:reroll(dt)
         self.number = math.random(1, 6)
     end
 
-    if (current_hud == huds["back_seats"]) then
+    if (current_hud == huds.back_seats) then
         set_hud("cab")
     end
 
