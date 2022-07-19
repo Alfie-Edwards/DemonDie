@@ -2,7 +2,7 @@ Car = {
     ac_settings = { "off", "cold", "hot" },
     ac = "off",
     ac_power = 1,
-    temperature = 20,
+    temperature = nil,
     radio_station_index = 1,
     radio_station = nil,
     last_horn = 0,
@@ -10,8 +10,11 @@ Car = {
     speed = 0,
     radio_stations = {"off", "classic", "metal", "jazz", "country"},
 
+    ambient_temperature = 20,  -- Starting temp, and temp always tends towards this value
+    ambient_power = 0.01,  -- How quickly the cars temp will tend towards ambient
     heatup_factor = 0,
-    temperature_damage = 15,
+    temperature_damage = 2,  -- The damage at 5 degrees past safe
+    safe_temperatures = {-15, 40},
 
     died_from = nil,
 
@@ -37,6 +40,7 @@ Car.__index = Car
 function Car.new()
     local obj = {}
     setmetatable(obj, Car)
+    obj.temperature = obj.ambient_temperature
     obj.radio_station = obj.radio_stations[obj.radio_station_index]
 
     obj.steering_friction = obj.default_steering_friction
@@ -62,8 +66,14 @@ function Car:update(dt)
 
     self:update_temperature(dt)
 
-    if self.temperature > 45 then
-        self:hurt(self.temperature_damage * dt, "cook")
+    if self.temperature < self.safe_temperatures[1] then
+        local damage_scale = ((self.safe_temperatures[1] - self.temperature) / 5) ^ 2
+        self:hurt(damage_scale * self.temperature_damage * dt, "cook")
+    end
+
+    if self.temperature > self.safe_temperatures[2] then
+        local damage_scale = ((self.temperature - self.safe_temperatures[2]) / 5) ^ 2
+        self:hurt(damage_scale * self.temperature_damage * dt, "cook")
     end
 
     self.d = self.d + (self.speed * dt)
@@ -75,18 +85,33 @@ function Car:update(dt)
     self.x = self.x + (self:steering_amount() * dt)
 end
 
+function Car:get_temperature_string()
+    local s = tostring(math.floor(self.temperature)).."c"
+    if (self.temperature < self.safe_temperatures[1] or self.temperature > self.safe_temperatures[2]) then
+        s = s.."!"
+    end
+    return s
+end
+
+function Car:get_radio_station_string()
+    return self.radio_station
+end
+
 function Car:update_temperature(dt)
     local change = 0
 
+    local ambient_factor = (self.ambient_temperature - self.temperature) * self.ambient_power
+    change = change + ambient_factor
+
     if self.ac == "cold" then
-        change = -self.ac_power
+        change = change - self.ac_power
     elseif self.ac == "hot" then
-        change = self.ac_power
+        change = change + self.ac_power
     end
 
-    change = (change + self.heatup_factor) * dt
+    change = change + self.heatup_factor
 
-    self.temperature = self.temperature + change
+    self.temperature = self.temperature + (change * dt)
 
     -- TODO if it gets too hot, you die
 end

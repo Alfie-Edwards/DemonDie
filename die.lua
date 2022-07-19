@@ -4,7 +4,7 @@ Die = {
     number = 1,
     difficulty = 0,
     max_difficulty = 3,
-    base_seconds_per_level = 20,
+    base_seconds_per_level = 8,
 
     starting_number_order = { },
     idx = 0
@@ -37,7 +37,7 @@ function Die:get_difficulty_multiplier(car)
         difficulty_multiplier = difficulty_multiplier * 2
     end
     function diff_down()
-        difficulty_multiplier = difficulty_multiplier / 2
+        difficulty_multiplier = difficulty_multiplier / 1.5
     end
 
     function is_honking()
@@ -50,7 +50,7 @@ function Die:get_difficulty_multiplier(car)
         return car.temperature > 30
     end
     function is_cold()
-        return car.temperature < 10
+        return car.temperature < 5
     end
 
     if (self.number == 1) then
@@ -118,7 +118,7 @@ function Die:apply_effect(dt)
 
     if (self.number == 1) then
         -- heat up
-        car.heatup_factor = 2 * diff_ratio
+        car.heatup_factor = 2.5 * diff_ratio
     elseif (self.number == 2) then
         car.heatup_factor = -0.5 * diff_ratio
         set_icy(diff_ratio)
@@ -156,8 +156,9 @@ end
 function Die:update(dt, car)
     local difficulty_multiplier = self:get_difficulty_multiplier(car)
 
-    -- Lvl 0->1 takes n seconds, 1->2 takes 2n seconds, 2->3 takes 3n seconds.
-    local seconds_per_level = self.base_seconds_per_level * (math.floor(self.difficulty) + 1)
+    -- Lvl 0->1 takes n seconds, 1->2 takes 1.5n seconds, 2->3 takes 2n seconds.
+    local seconds_multiplier = 1 + math.floor(self.difficulty) * 0.5
+    local seconds_per_level = self.base_seconds_per_level * seconds_multiplier
 
     self.difficulty = math.min(self.max_difficulty, self.difficulty + (dt * difficulty_multiplier / seconds_per_level))
     self:apply_effect(dt)

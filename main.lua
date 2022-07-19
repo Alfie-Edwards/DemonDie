@@ -31,7 +31,7 @@ function create_huds()
     huds.cab:add_draw_func(
         function()
             love.graphics.draw(images.cab)
-            love.graphics.print({{1, 1, 1, 0.6}, tostring(math.floor(car.temperature)).."c\n"..car.radio_station}, 155, 117)
+            love.graphics.print({{1, 1, 1, 0.6}, car:get_temperature_string().."\n"..car:get_radio_station_string()}, 155, 117)
             love.graphics.draw(images.book, 160, 137)
             draw_wheel()
             love.graphics.draw(images.eye, 240, 11)
