@@ -3,6 +3,7 @@ Hud = {
     draw_funcs = {},
     update_funcs = {},
     keypressed_funcs = {},
+    default_cursor = nil,
 }
 Hud.__index = Hud
 
@@ -13,6 +14,7 @@ function Hud.new()
     obj.draw_funcs = {}
     obj.update_funcs = {}
     obj.keypressed_funcs = {}
+    obj.default_cursor = love.mouse.getSystemCursor("arrow")
 
     return obj
 end
@@ -59,6 +61,19 @@ function Hud:update(dt)
     for _, update_func in ipairs(self.update_funcs) do
         update_func(dt)
     end
+
+    local screen_x, screen_y = love.mouse.getPosition( )
+    local canvas_x, canvas_y = screen_to_canvas(screen_x, screen_y)
+
+    local cursor = self.default_cursor
+    for _, mouse_region in ipairs(self.mouse_regions) do
+        if (mouse_region.bounding_box:contains(canvas_x, canvas_y)) then
+            cursor = mouse_region.cursor
+            break
+        end
+    end
+    love.mouse.setCursor(cursor)
+
 end
 
 function Hud:draw()
@@ -76,16 +91,18 @@ end
 MouseRegion = {
     bounding_box = BoundingBox.new(0, 0, 0, 0),
     click_func = nil,
-    button = 1
+    button = 1,
+    cursor = nil,
 }
 MouseRegion.__index = MouseRegion
 
-function MouseRegion.new(bounding_box, click_func, button)
+function MouseRegion.new(bounding_box, click_func, button, cursor)
     local obj = {}
     setmetatable(obj, MouseRegion)
     obj.bounding_box = bounding_box
     obj.click_func = click_func
     obj.button = button or 1
+    obj.cursor = cursor or love.mouse.getSystemCursor("hand")
 
     return obj
 end

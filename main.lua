@@ -48,25 +48,25 @@ function create_huds()
     )
     huds.cab:add_mouse_region(
         MouseRegion.new(
-            BoundingBox.new(162, 140, 215, 180),
+            BoundingBox.new(163, 140, 216, 180),
             function() set_hud(last_book_page) end
         )
     )
     huds.cab:add_mouse_region(
         MouseRegion.new(
-            BoundingBox.new(152, 142, 154, 156),
+            BoundingBox.new(152, 142, 155, 156),
             function() car.ac = "cold" end
         )
     )
     huds.cab:add_mouse_region(
         MouseRegion.new(
-            BoundingBox.new(156, 142, 158, 156),
+            BoundingBox.new(156, 142, 159, 156),
             function() car.ac = "off" end
         )
     )
     huds.cab:add_mouse_region(
         MouseRegion.new(
-            BoundingBox.new(160, 142, 162, 156),
+            BoundingBox.new(160, 142, 163, 156),
             function() car.ac = "hot" end
         )
     )
@@ -226,7 +226,7 @@ function love.mousepressed(x, y, button)
         x = love.graphics.getWidth() - x
     end
 
-    canvas_x, canvas_y = screen_to_canvas(x, y)
+    local canvas_x, canvas_y = screen_to_canvas(x, y)
     current_hud:click(canvas_x, canvas_y, button)
 end
 
