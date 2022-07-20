@@ -24,12 +24,12 @@ function create_death_screen(cause, score)
     local cause_text = love.graphics.newText(font, {{0.66, 0.06, 0.08}, cause_str})
 
 
-    local intro_str = obj.score_intro_text
+    local intro_str = death_screen_text.score_intro_text
     local score_str = tostring(math.floor(score)).."m"
     local score_text = love.graphics.newText(font, {{0.41, 0.40, 0.39}, intro_str,
                                                     {1.00, 1.00, 1.00}, score_str})
 
-    death_screen:add_draw_function(
+    death_screen:add_draw_func(
         function()
             love.graphics.clear(0, 0, 0)
             draw_centred_text(cause_text, (canvas_size[2] / 2) - 10)
