@@ -19,12 +19,15 @@ function Effects:set_roll(angle)
     angle = clamp(angle, -0.02, 0.02)
 
     -- Clip low roll values to zero
-    if (math.abs(angle) < 0.015) then
-        angle = 0
+    if (math.abs(angle) < 0.018) then
+        angle = ((angle / 0.018) ^ 9) * 0.018
     end
+    if (math.abs(angle) < 0.005) then
+        angle = 0
+    end 
 
     -- Smooth out roll effects
-    self.roll = lerp(self.roll, angle, 0.1)
+    self.roll = lerp(self.roll, angle, 0.25)
 end
 
 function Effects:reset_roll(angle)
@@ -60,7 +63,7 @@ function Effects:push()
 
     local translate_x = 0
     local translate_y = 0
-    local rotate_angle = 0.0
+    local rotate_angle = 0.000
     local scale_x = 1
     local scale_y = 1
 
