@@ -1,5 +1,6 @@
 require "utils"
 require "exorcism"
+require "effects"
 require "die"
 require "car"
 require "bar"
@@ -87,8 +88,6 @@ function love.load()
     huds = create_huds()
     set_hud("start_screen")
 
-    is_flipped = false
-
     -- Create state
     car = Car.new()
     drive_load(car)
@@ -101,15 +100,8 @@ function love.load()
         Bar.new("demonic presence (lvl III)", 1, {0.68, 0.11, 0.11}, {0.48, 0.09, 0.09}, {1, 0.3, 0}, {1, 1, 1}),
     }
 
+    effects = Effects.new()
     current_exorcism = nil
-end
-
-function set_flipped()
-    is_flipped = true
-end
-
-function unset_flipped()
-    is_flipped = false
 end
 
 function love.mousepressed(x, y, button)
@@ -149,6 +141,26 @@ function love.update(dt)
     if car.health <= 0 and current_hud ~= huds.death_screen then
         set_hud_to_death_screen(car.died_from, car.d)
     end
+
+    -- Update effects
+
+    local roll = (car:steering_amount()  - car.steer_amount_prev) * car.speed ^ 2 * 0.0007
+    effects:set_roll(roll)
+    if (is_offroad()) then
+        effects:set_screen_shake()
+    else
+        effects:unset_screen_shake()
+    end
+
+    -- Begin tinting the screen withing 10 degrees of dangerous temps
+    -- Screen is fully tinted at 50 degrees past dangerous (60 - 10)
+    local cold_opacity = clamp((car.safe_temperatures[1] + 10 - car.temperature) / 60, 0, 1)
+    local hot_opacity = clamp((car.temperature - car.safe_temperatures[2] + 10) / 60, 0, 1)
+    if (cold_opacity > 0) then
+        effects:set_tint({0, 1, 1, cold_opacity})
+    elseif (hot_opacity > 0) then
+        effects:set_tint({1, 0, 0, hot_opacity})
+    end
 end
 
 function draw_canvas()
@@ -166,16 +178,11 @@ function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0)
 
-    if start_screen ~= nil then
-        start_screen:draw()
-    elseif death_screen ~= nil then
-        death_screen:draw()
+    if (current_hud == huds.start_screen or
+        current_hud == huds.death_screen) then
+        current_hud:draw()
     else
-        if is_flipped then
-            love.graphics.push()
-            love.graphics.scale(-1, 1)
-            love.graphics.translate(-canvas_w, 0)
-        end
+        effects:push()
 
         love.graphics.push()
         love.graphics.translate(0, -25)
@@ -184,10 +191,7 @@ function love.draw()
 
         current_hud:draw()
 
-        if is_flipped then
-            love.graphics.pop()
-        end
-
+        effects:pop()
     end
 
     draw_canvas()

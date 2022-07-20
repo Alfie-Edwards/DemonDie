@@ -249,8 +249,12 @@ function unset_nudging()
     car.steering_nudge = 0
 end
 
+function is_offroad()
+    return #road > 0 and math.abs(car.x - road[1].x) > road_width
+end
+
 function get_hurt(dt)
-    if #road > 0 and math.abs(car.x - road[1].x) > road_width then
+    if is_offroad() then
         if dbg then print('off the road!') end
         -- car.health = car.health - car.terrain_damage * dt
         car:hurt(car.terrain_damage * dt, "offroad")

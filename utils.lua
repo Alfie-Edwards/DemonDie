@@ -35,6 +35,12 @@ function rotate_about(angle, x, y)
     love.graphics.translate(-x, -y)
 end
 
+function scale_about(scale_x, scale_y, x, y)
+    love.graphics.translate(x, y)
+    love.graphics.scale(scale_x, scale_y)
+    love.graphics.translate(-x, -y)
+end
+
 function wrap_text(text, font, width)
     local line_begin = 1
     local word_begin = 1
@@ -95,7 +101,8 @@ function draw_centred_text(text, y, color, line_spacing)
             draw_centred_text(line, y, color)
             y = y + font:getLineHeight() + font:getHeight() + line_spacing
         end
-    elseif (type(text) == "love.graphics.Text") then
+    elseif (text.getFont ~= nil) then
+        -- If text is a love.graphics.Text
         local x = (canvas_size[1] - text:getWidth()) / 2
         love.graphics.draw(text, x, y)
     else

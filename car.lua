@@ -29,11 +29,11 @@ Car = {
     -- driving state
     x = 0,
     steer_speed = 0,                -- amount of steering by user; to include nudges, use `steering_amount()`
+    steer_amount_prev = 0,          -- used to calculate x acceleration for visual effects
     health = 100,
     steering_friction = nil,
     steering_nudge = 0,
     d = 0,  -- total distance moved
-
 }
 Car.__index = Car
 
@@ -61,6 +61,7 @@ function Car:hurt(amount, kind)
 end
 
 function Car:update(dt)
+    self.steer_amount_prev = self:steering_amount()
     self.last_horn = self.last_horn + dt
     self.last_swerve = self.last_swerve + dt
 

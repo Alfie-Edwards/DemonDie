@@ -132,7 +132,9 @@ function Die:apply_effect(dt)
         set_nudging(diff_ratio)
     elseif (self.number == 6) then
         -- flipped view
-        set_flipped()
+        if (diff_ratio > 0) then
+            effects:set_flipped()
+        end
     end
 end
 
@@ -149,7 +151,7 @@ function Die:remove_effect(dt)
     elseif (self.number == 5) then
         unset_nudging()
     elseif (self.number == 6) then
-        unset_flipped()
+        effects:unset_flipped()
     end
 end
 

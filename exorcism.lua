@@ -48,7 +48,7 @@ function ExorcismStage.new(type)
 end
 
 function create_typing_stage(difficulty)
-    local window_size = math.floor(0.5 * #words)
+    local window_size = math.floor(0.6 * #words)
     local window_start = math.floor((#words - window_size) * difficulty) + 1
 
     local index1 = math.random(window_start, window_start + window_size - 1)
