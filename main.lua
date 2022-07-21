@@ -89,6 +89,8 @@ function love.load()
     set_hud("start_screen")
 
     -- Create state
+    current_exorcism = nil
+    effects = Effects.new()
     car = Car.new()
     drive_load(car)
     die = Die.new()
@@ -100,8 +102,6 @@ function love.load()
         Bar.new("demonic presence (lvl III)", 1, {0.68, 0.11, 0.11}, {0.48, 0.09, 0.09}, {1, 0.3, 0}, {1, 1, 1}),
     }
 
-    effects = Effects.new()
-    current_exorcism = nil
 end
 
 function love.mousepressed(x, y, button)

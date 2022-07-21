@@ -5,6 +5,7 @@ Die = {
     difficulty = 0,
     max_difficulty = 3,
     base_seconds_per_level = 8,
+    seconds_since_last_flip = 0,
 
     starting_number_order = { },
     idx = 0
@@ -21,7 +22,7 @@ function Die.new()
     shuffle_list(second_three)
 
     obj.starting_number_order = concat(first_three, second_three)
-    obj:reroll()
+    obj:reroll(0)
 
     return obj
 end
@@ -120,9 +121,11 @@ function Die:apply_effect(dt)
         -- heat up
         car.heatup_factor = 2.5 * diff_ratio
     elseif (self.number == 2) then
+        -- icy road
         car.heatup_factor = -0.5 * diff_ratio
         set_icy(diff_ratio)
     elseif (self.number == 3) then
+        -- darkness
         set_dark(diff_ratio)
     elseif (self.number == 4) then
         -- obstacles
@@ -132,8 +135,20 @@ function Die:apply_effect(dt)
         set_nudging(diff_ratio)
     elseif (self.number == 6) then
         -- flipped view
-        if (diff_ratio > 0) then
-            effects:set_flipped()
+        if (self.seconds_since_last_flip > 1) then
+            local flip_chance = 0.5 * diff_ratio * dt
+
+            if (diff_ratio == 1) then
+                if (math.random() < flip_chance) then
+                    effects:toggle_flipped_y()
+                    self.seconds_since_last_flip = 0
+                end
+            end
+
+            if (math.random() < flip_chance) then
+                effects:toggle_flipped_x()
+                self.seconds_since_last_flip = 0
+            end
         end
     end
 end
@@ -151,11 +166,13 @@ function Die:remove_effect(dt)
     elseif (self.number == 5) then
         unset_nudging()
     elseif (self.number == 6) then
-        effects:unset_flipped()
+        effects:unset_flipped_x()
+        effects:unset_flipped_y()
     end
 end
 
 function Die:update(dt, car)
+    self.seconds_since_last_flip = self.seconds_since_last_flip + dt
     local difficulty_multiplier = self:get_difficulty_multiplier(car)
 
     -- Lvl 0->1 takes n seconds, 1->2 takes 1.5n seconds, 2->3 takes 2n seconds.

@@ -72,6 +72,7 @@ function screen_to_canvas(screen_x, screen_y)
     local x_offset, y_offset, scale = canvas_position()
     local canvas_x = (screen_x - x_offset) / scale
     local canvas_y = (screen_y - y_offset) / scale
+    local canvas_x, canvas_y = effects:get_transform():transformPoint(canvas_x, canvas_y)
     return canvas_x, canvas_y
 end
 

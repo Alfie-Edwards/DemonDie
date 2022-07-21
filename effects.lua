@@ -1,7 +1,8 @@
 require "utils"
 
 Effects = {
-    is_flipped = false,
+    is_flipped_x = false,
+    is_flipped_y = false,
     screen_shake = false,
     roll = 0,
     tint = {1, 1, 1, 0},
@@ -42,12 +43,28 @@ function Effects:unset_tint()
     set_tint({0, 0, 0, 0})
 end
 
-function Effects:set_flipped()
-    self.is_flipped = true
+function Effects:set_flipped_x()
+    self.is_flipped_x = true
 end
 
-function Effects:unset_flipped()
-    self.is_flipped = false
+function Effects:toggle_flipped_x()
+    self.is_flipped_x = not self.is_flipped_x
+end
+
+function Effects:unset_flipped_x()
+    self.is_flipped_x = false
+end
+
+function Effects:set_flipped_y()
+    self.is_flipped_y = true
+end
+
+function Effects:toggle_flipped_y()
+    self.is_flipped_y = not self.is_flipped_y
+end
+
+function Effects:unset_flipped_y()
+    self.is_flipped_y = false
 end
 
 function Effects:set_screen_shake()
@@ -58,12 +75,10 @@ function Effects:unset_screen_shake()
     self.screen_shake = false
 end
 
-function Effects:push()
-    love.graphics.push()
-
+function Effects:get_transform()
     local translate_x = 0
     local translate_y = 0
-    local rotate_angle = 0.000
+    local rotate_angle = 0
     local scale_x = 1
     local scale_y = 1
 
@@ -82,8 +97,12 @@ function Effects:push()
         rotate_angle = rotate_angle + (math.random() - 0.5) * 0.01
     end
 
-    if (self.is_flipped) then
+    if (self.is_flipped_x) then
         scale_x = scale_x * -1
+    end
+
+    if (self.is_flipped_y) then
+        scale_y = scale_y * -1
     end
 
     -- Apply scale if we are rotating to keep the canvas filling the frame.
@@ -98,11 +117,21 @@ function Effects:push()
         scale_y = scale_y * (min_scale_y / math.abs(scale_y))
     end
 
-    rotate_about(rotate_angle, canvas_size[1] / 2, canvas_size[2] / 2)
-    scale_about(scale_x, scale_y, canvas_size[1] / 2, canvas_size[2] / 2)
-    love.graphics.translate(translate_x, translate_y)
+    return love.math.newTransform(
+        canvas_size[1] / 2 + translate_x,
+        canvas_size[2] / 2 + translate_y,
+        rotate_angle,
+        scale_x,
+        scale_y,
+        canvas_size[1] / 2,
+        canvas_size[2] / 2
+    )
 end
 
+function Effects:push()
+    love.graphics.push()
+    love.graphics.applyTransform(self:get_transform())
+end
 
 function Effects:pop()
     local prev_blend_mode = love.graphics.getBlendMode()
