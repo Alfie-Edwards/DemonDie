@@ -61,7 +61,6 @@ function Car:hurt(amount, kind)
 end
 
 function Car:update(dt)
-    self.steer_amount_prev = self:steering_amount()
     self.last_horn = self.last_horn + dt
     self.last_swerve = self.last_swerve + dt
 

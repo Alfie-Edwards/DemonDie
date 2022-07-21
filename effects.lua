@@ -15,7 +15,7 @@ function Effects.new()
     return obj
 end
 
-function Effects:set_roll(angle)
+function Effects:update_roll(angle)
     -- Do not allow roll values which are too large
     angle = clamp(angle, -0.02, 0.02)
 
@@ -25,10 +25,17 @@ function Effects:set_roll(angle)
     end
     if (math.abs(angle) < 0.005) then
         angle = 0
-    end 
+    end
 
-    -- Smooth out roll effects
-    self.roll = lerp(self.roll, angle, 0.25)
+    -- Smooth out roll effects (lerp with prev angle, enforce max decay rate unless sign change)
+    local max_decay = lerp(self.roll, 0, 0.2)
+    local next_value = lerp(self.roll, angle, 0.8)
+    if (next_value * max_decay < 0 or
+        math.abs(next_value) > math.abs(max_decay)) then
+        self.roll = next_value
+    else
+        self.roll = max_decay
+    end
 end
 
 function Effects:reset_roll(angle)

@@ -145,7 +145,8 @@ function love.update(dt)
     -- Update effects
 
     local roll = (car:steering_amount()  - car.steer_amount_prev) * car.speed ^ 2 * 0.0007
-    effects:set_roll(roll)
+    car.steer_amount_prev = car:steering_amount()
+    effects:update_roll(roll, dt)
     if (is_offroad()) then
         effects:set_screen_shake()
     else
