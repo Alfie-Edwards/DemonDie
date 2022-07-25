@@ -18,7 +18,7 @@ function drive_load(car)
 
     floor_y = -1
 
-    waypoint_wobbliness = 4
+    waypoint_wobbliness = 5
     distance_between_waypoints = 50
 
     -- obstacle generation config --
@@ -534,7 +534,7 @@ function make_obstacle(desired_z)
     local desired_z = desired_z or farplane
 
     local desired_x = randfloat(-obstacle_range, obstacle_range)
-    desired_x = desired_x - car.x
+    desired_x = car.x + desired_x
 
     return { x = desired_x, y = floor_y, z = desired_z, kind = generate_obstacle_kind() }
 end
