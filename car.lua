@@ -25,6 +25,7 @@ Car = {
     max_turn_rate = 3,
     terrain_damage = 10,            -- how much damage terrain does
     default_steering_friction = 2,  -- how much the steering amount wants to return to 0
+    steering_speed_threshold = 4,   -- how fast before we can steer properly?
 
     -- driving state
     x = 0,
@@ -49,7 +50,13 @@ function Car.new()
 end
 
 function Car:steering_amount()
-    return self.steer_speed + self.steering_nudge
+    -- if we're going too slow, we can't steer well
+    local speed_multiplier = 1
+    if self.speed < self.steering_speed_threshold then
+        speed_multiplier = (self.speed / self.steering_speed_threshold)
+    end
+
+    return (self.steer_speed + self.steering_nudge) * speed_multiplier
 end
 
 function Car:hurt(amount, kind)
@@ -135,25 +142,25 @@ function Car:accelerate(dt)
 end
 
 function Car:steer(dt)
-    -- if we're going too slow, we can't steer well
-    local speed_multiplier = 1
-    local speed_multiplier_threshold = 5
-    if self.speed < speed_multiplier_threshold then
-        speed_multiplier = (self.speed / speed_multiplier_threshold) * self.steering
+    -- set the current steering speed
+    local holding = false
+    if love.keyboard.isDown("left") then
+        self.steer_speed = self.steer_speed - self.steering * dt
+        holding = true
+    elseif love.keyboard.isDown("right") then
+        self.steer_speed = self.steer_speed + self.steering * dt
+        holding = true
     end
 
-    -- set the current steering speed
-    if love.keyboard.isDown("left") then
-        self.steer_speed = math.max(self.steer_speed - self.steering * dt * speed_multiplier, -self.max_turn_rate)
-    elseif love.keyboard.isDown("right") then
-        self.steer_speed = math.min(self.steer_speed + self.steering * dt * speed_multiplier, self.max_turn_rate)
-    end
+    self.steer_speed = clamp(self.steer_speed, -self.max_turn_rate, self.max_turn_rate)
 
     -- apply friction to the steering speed
-    if self.steer_speed > 0 then
-        self.steer_speed = math.max(self.steer_speed - (self.steering_friction * dt), 0)
-    elseif self.steer_speed < 0 then
-        self.steer_speed = math.min(self.steer_speed + (self.steering_friction * dt), 0)
+    if not holding then
+        if self.steer_speed > 0 then
+            self.steer_speed = math.max(self.steer_speed - (self.steering_friction * dt), 0)
+        elseif self.steer_speed < 0 then
+            self.steer_speed = math.min(self.steer_speed + (self.steering_friction * dt), 0)
+        end
     end
 end
 
