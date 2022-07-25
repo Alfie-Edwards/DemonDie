@@ -232,7 +232,7 @@ function set_demonic_obstacles(scale)
 end
 
 function unset_demonic_obstacles()
-    is_demonspawning = true
+    is_demonspawning = false
     min_distance_between_obstacles = default_min_distance_between_obstacles
     max_distance_between_obstacles = default_max_distance_between_obstacles
     obstacle_range = default_obstacle_range
