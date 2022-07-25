@@ -12,10 +12,7 @@ require "huds/page"
 require "huds/start_screen"
 require "huds/death_screen"
 
-print("test")
-
 function set_hud(name)
-    print("set hud to "..name.." ("..tostring(huds[name])..")")
     current_hud = huds[name]
 end
 

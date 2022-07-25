@@ -22,7 +22,7 @@ function Die.new()
     shuffle_list(second_three)
 
     obj.starting_number_order = concat(first_three, second_three)
-    obj:reroll(0)
+    obj:reroll()
 
     return obj
 end
@@ -184,6 +184,10 @@ function Die:update(dt, car)
 end
 
 function Die:reroll(dt)
+    if dt == nil then
+        dt = 0
+    end
+
     self:remove_effect(dt)
 
     self.idx = self.idx + 1
