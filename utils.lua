@@ -64,7 +64,7 @@ function canvas_position()
     local y_scale = screen_height / canvas_size[2]
     local min_scale = math.min(x_scale, y_scale)
     local x_offset = (screen_width - (canvas_size[1] * min_scale)) / 2
-    local y_offset = (screen_height - (canvas_size[2] * min_scale)) / 2
+    local y_offset = ((screen_height - (canvas_size[2] * min_scale)) / 2) + 50
     return x_offset, y_offset, min_scale
 end
 
