@@ -135,7 +135,7 @@ function Die:apply_effect(dt)
         set_nudging(diff_ratio)
     elseif (self.number == 6) then
         -- flipped view
-        if (self.seconds_since_last_flip > 1) then
+        if (self.seconds_since_last_flip > 3) then
             local flip_chance = 0.5 * diff_ratio * dt
 
             if (diff_ratio == 1) then
