@@ -90,7 +90,7 @@ function Effects:get_transform()
     local scale_y = 1
 
     if (self.roll ~= 0) then
-        if (current_hud == huds.back_seats) then 
+        if (current_hud == huds.back_seats) then
             -- Reverse roll when looking backwards
             rotate_angle = rotate_angle - self.roll
         else

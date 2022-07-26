@@ -11,6 +11,7 @@ require "huds/cab"
 require "huds/page"
 require "huds/start_screen"
 require "huds/death_screen"
+require "radio"
 
 function set_hud(name)
     current_hud = huds[name]
@@ -92,6 +93,8 @@ function love.load()
     drive_load(car)
     die = Die.new()
 
+    radio = Radio.new(car)
+
     health_bar = Bar.new("health", 100, {0.28, 0.57, 0.5}, {0.14, 0.4, 0.34}, {0.37, 0.69, 0.61}, {1, 1, 1})
     die_bars = {
         Bar.new("demonic presence (lvl I)", 1, {0.48, 0.09, 0.09}, {0.28, 0.07, 0.07}, {1, 0.3, 0}, {1, 1, 1}),
@@ -134,6 +137,7 @@ function love.update(dt)
     current_hud:update(dt)
     car:update(dt)
     die:update(dt, car)
+    radio:update(car)
 
     if car.health <= 0 and current_hud ~= huds.death_screen then
         set_hud_to_death_screen(car.died_from, car.d)
@@ -141,7 +145,7 @@ function love.update(dt)
 
     -- Update effects
 
-    local roll = (car:steering_amount()  - car.steer_amount_prev) * car.speed ^ 2 * 0.0007
+    local roll = (car:steering_amount() - car.steer_amount_prev) * car.speed ^ 2 * 0.0007
     car.steer_amount_prev = car:steering_amount()
     effects:update_roll(roll, dt)
     if (is_offroad()) then
