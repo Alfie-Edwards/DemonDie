@@ -1,3 +1,4 @@
+require "utils"
 require "drive"
 
 Die = {
@@ -10,11 +11,11 @@ Die = {
     starting_number_order = { },
     idx = 0
 }
-Die.__index = Die
+setup_class("Die")
 
 function Die.new()
     local obj = {}
-    setmetatable(obj, Die)
+    setup_instance(obj, Die)
 
     local first_three = { 1, 2, 3 }
     shuffle_list(first_three)

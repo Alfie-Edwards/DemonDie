@@ -1,3 +1,5 @@
+require "utils"
+
 Car = {
     ac_settings = { "off", "cold", "hot" },
     ac = "off",
@@ -36,11 +38,11 @@ Car = {
     steering_nudge = 0,
     d = 0,  -- total distance moved
 }
-Car.__index = Car
+setup_class("Car")
 
 function Car.new()
     local obj = {}
-    setmetatable(obj, Car)
+    setup_instance(obj, Car)
     obj.temperature = obj.ambient_temperature
     obj.radio_station = obj.radio_stations[obj.radio_station_index]
 

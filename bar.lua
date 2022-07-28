@@ -1,3 +1,5 @@
+require "utils"
+
 Bar = {
     name = nil,
     max = 0,
@@ -7,11 +9,11 @@ Bar = {
     back_color = nil,
     text_color = nil,
 }
-Bar.__index = Bar
+setup_class("Bar")
 
 function Bar.new(name, max, border_color, bar_color, back_color, text_color)
     local obj = {}
-    setmetatable(obj, Bar)
+    setup_instance(obj, Bar)
     obj.name = name
     obj.max = max
     obj.border_color = border_color

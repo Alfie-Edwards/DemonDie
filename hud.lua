@@ -5,11 +5,11 @@ Hud = {
     keypressed_funcs = {},
     default_cursor = nil,
 }
-Hud.__index = Hud
+setup_class("Hud")
 
 function Hud.new()
     local obj = {}
-    setmetatable(obj, Hud)
+    setup_instance(obj, Hud)
     obj.mouse_regions = {}
     obj.draw_funcs = {}
     obj.update_funcs = {}
@@ -94,11 +94,11 @@ MouseRegion = {
     button = 1,
     cursor = nil,
 }
-MouseRegion.__index = MouseRegion
+setup_class("MouseRegion")
 
 function MouseRegion.new(bounding_box, click_func, button, cursor)
     local obj = {}
-    setmetatable(obj, MouseRegion)
+    setup_instance(obj, MouseRegion)
     obj.bounding_box = bounding_box
     obj.click_func = click_func
     obj.button = button or 1

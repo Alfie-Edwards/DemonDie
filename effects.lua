@@ -7,11 +7,11 @@ Effects = {
     roll = 0,
     tint = {1, 1, 1, 0},
 }
-Effects.__index = Effects
+setup_class("Effects")
 
 function Effects.new()
     local obj = {}
-    setmetatable(obj, Effects)
+    setup_instance(obj, Effects)
     return obj
 end
 

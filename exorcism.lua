@@ -7,11 +7,11 @@ Exorcism = {
     die = nil,
     complete = false,
 }
-Exorcism.__index = Exorcism
+setup_class("Exorcism")
 
 function Exorcism.new(die)
     local obj = {}
-    setmetatable(obj, Exorcism)
+    setup_instance(obj, Exorcism)
     obj.die = die
     obj.current_stage = create_typing_stage(die.difficulty / die.max_difficulty)
 
@@ -37,11 +37,11 @@ ExorcismStage = {
     type = nil,
     data = nil,
 }
-ExorcismStage.__index = ExorcismStage
+setup_class("ExorcismStage")
 
 function ExorcismStage.new(type)
     local obj = {}
-    setmetatable(obj, ExorcismStage)
+    setup_instance(obj, ExorcismStage)
     obj.type = type
 
     return obj

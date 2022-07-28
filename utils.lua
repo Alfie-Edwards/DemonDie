@@ -1,14 +1,27 @@
+function setup_instance(inst, class)
+    setmetatable(inst, {__index = class})
+end
+
+function setup_class(name, super)
+    if (super == nil) then
+        super = Object
+    end
+    local template = _G[name]
+    setmetatable(template, {__index = super})
+    template.type = function(obj) return name end
+end
+
 BoundingBox = {
     x1 = 0,
     y1 = 0,
     x2 = 0,
     y2 = 0,
 }
-BoundingBox.__index = BoundingBox
+setup_class("BoundingBox")
 
 function BoundingBox.new(x1, y1, x2, y2)
     local obj = {}
-    setmetatable(obj, BoundingBox)
+    setup_instance(obj, BoundingBox)
     obj.x1 = x1
     obj.y1 = y1
     obj.x2 = x2
@@ -96,13 +109,14 @@ end
 
 function draw_centred_text(text, y, color, line_spacing)
     color = color or {1, 1, 1}
-    if (type(text) == "table") then
+    local text_type = type_string(text)
+    if (text_type == "table") then
         line_spacing = line_spacing or 0
         for _,line in ipairs(text) do
             draw_centred_text(line, y, color)
             y = y + font:getLineHeight() + font:getHeight() + line_spacing
         end
-    elseif (text.getFont ~= nil) then
+    elseif (text_type == "Text") then
         -- If text is a love.graphics.Text
         local x = (canvas_size[1] - text:getWidth()) / 2
         love.graphics.draw(text, x, y)
@@ -133,4 +147,12 @@ function lerp_list(a, b, ratio)
         result[i] = lerp(a_item, b_item, ratio)
     end
     return result
+end
+
+function type_string(obj)
+    -- LOVE objects have their own type field.
+    if (obj.type ~= nil) then
+        return obj:type()
+    end
+    return type(obj)
 end
