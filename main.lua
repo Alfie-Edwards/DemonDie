@@ -1,4 +1,5 @@
 require "utils"
+require "asset_cache"
 require "exorcism"
 require "effects"
 require "die"
@@ -55,6 +56,8 @@ function love.load()
     canvas = love.graphics.newCanvas(canvas_size[1], canvas_size[2])
 
     -- Load assets
+    asset_cache = AssetCache.new()
+    
     images = {
         cab = love.graphics.newImage("assets/cab.png"),
         eye = love.graphics.newImage("assets/eye.png"),
