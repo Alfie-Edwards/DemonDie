@@ -57,7 +57,8 @@ function create_typing_stage(difficulty)
     local text = words[index1].." "..words[index2].." "..words[index3]
 
     local stage = ExorcismStage.new("typing")
-    stage.text = wrap_text(text, font, 78)
+    local lines = wrap_text(text, font, 78)
+    stage.text = table.concat(lines, "\n")
     stage.pos = 1
     return stage
 end

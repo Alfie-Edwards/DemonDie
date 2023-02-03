@@ -199,8 +199,8 @@ function Die:reroll(dt)
         self.number = math.random(1, 6)
     end
 
-    if (current_hud == huds.back_seats) then
-        set_hud("cab")
+    if is_screen("back_seats") then
+        set_screen("cab")
     end
 
     self:apply_effect(dt)

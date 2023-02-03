@@ -1,4 +1,5 @@
 function setup_instance(inst, class)
+    assert(class ~= nil)
     setmetatable(inst, {__index = class})
 end
 
@@ -42,32 +43,49 @@ function BoundingBox:height()
     return self.y2 - self.y1
 end
 
+function BoundingBox:center_x()
+    return (self.x2 + self.x1) / 2
+end
+
+function BoundingBox:center_y()
+    return (self.y2 + self.y1) / 2
+end
+
 function rotate_about(angle, x, y)
-    love.graphics.translate(x, y)
-    love.graphics.rotate(angle)
-    love.graphics.translate(-x, -y)
+    local transform = love.math.newTransform()
+    transform:translate(x, y)
+    transform:rotate(angle)
+    transform:translate(-x, -y)
+    return transform
 end
 
 function scale_about(scale_x, scale_y, x, y)
-    love.graphics.translate(x, y)
-    love.graphics.scale(scale_x, scale_y)
-    love.graphics.translate(-x, -y)
+    local transform = love.math.newTransform()
+    transform:translate(x, y)
+    transform:scale(scale_x, scale_y)
+    transform:translate(-x, -y)
+    return transform
 end
 
 function wrap_text(text, font, width)
     local line_begin = 1
     local word_begin = 1
     local line_end = 1
-    while(line_end < #text) do
-        if (not text:sub(line_end,line_end):match("^[A-z0-9_]$")) then
+    local result = {}
+    while line_end < #text do
+        if text:sub(line_end,line_end) == "\n" then
+            table.insert(result, text:sub(line_begin,line_end-1))
+            line_begin = line_end + 1
+        elseif not text:sub(line_end,line_end):match("^[A-z0-9_]$") then
             word_begin = line_end + 1
-        elseif (font:getWidth(text:sub(line_begin,line_end)) > width) then
-            text = text:sub(1,word_begin-1).."\n"..text:sub(word_begin)
+        elseif line_begin ~= word_begin and font:getWidth(text:sub(line_begin,line_end)) > width then
+            table.insert(result, text:sub(line_begin,word_begin-1))
             line_begin = word_begin
         end
         line_end = line_end + 1
     end
-    return text
+    table.insert(result, text:sub(line_begin,#text))
+    return result
 end
 
 function canvas_position()
@@ -126,6 +144,14 @@ function draw_centred_text(text, y, color, line_spacing)
     end
 end
 
+function draw_bb(bb, color)
+    if (color == nil) or (bb == nil) or (color[4] == 0) then
+        return
+    end
+    love.graphics.setColor(color)
+    love.graphics.rectangle("fill", bb.x1, bb.y1, bb:width(), bb:height())
+end
+
 function clamp(x, min, max)
     x = math.min(x, max)
     x = math.max(x, min)
@@ -151,8 +177,66 @@ end
 
 function type_string(obj)
     -- LOVE objects have their own type field.
-    if (obj.type ~= nil) then
+    if (obj ~= nil and obj.type ~= nil) then
         return obj:type()
     end
     return type(obj)
+end
+
+function index_of(list, value)
+    for i,v in ipairs(list) do
+        if v == value then
+            return i
+        end
+    end
+    return nil
+end
+
+function remove_value(list, value_to_remove)
+    local i = index_of(list, value_to_remove)
+    if i ~= nil then
+        table.remove(list, i)
+    end
+end
+
+function value_in(value, list)
+    for _,item in ipairs(list) do
+        if value == item then
+            return true
+        end
+    end
+    return false
+end
+
+function get_key(table, value)
+    for k,v in pairs(table) do
+        if v == value then
+            return k
+        end
+    end
+
+    local metatable = getmetatable(table)
+    if metatable ~= nil and metatable.__index ~= nil then
+        return get_key(metatable.__index, value)
+    end
+
+    return nil
+end
+
+function get_local(name, default, stack_level)
+    if stack_level == nil then
+        stack_level = 1
+    end
+
+    local var_index = 1
+    while true do
+        local var_name, value = debug.getlocal(stack_level, var_index)
+        print(tostring(var_name)..": "..tostring(value))
+        if var_name == name then
+            return value
+        elseif var_name == nil then
+            return default
+        end
+        var_index = var_index + 1
+    end
 end

@@ -1,46 +1,37 @@
 require "utils"
 require "asset_cache"
-require "exorcism"
 require "effects"
 require "die"
 require "car"
-require "bar"
 require "drive"
-require "hud"
-require "huds/back_seats"
-require "huds/cab"
-require "huds/page"
-require "huds/start_screen"
-require "huds/death_screen"
+require "ui.view"
+require "ui_custom.back_seats"
+require "ui_custom.cab"
+require "ui_custom.start_screen"
+require "ui_custom.death_screen"
 require "radio"
 
-
-function set_hud(name)
-    current_hud = huds[name]
+function set_screen(name)
+    print("set view to "..name.." ("..tostring(screens[name])..")")
+    view:set_content(screens[name])
 end
 
-function set_hud_to_death_screen(cause, score)
-    huds.death_screen = create_death_screen(cause, score)
-    set_hud("death_screen")
+function is_screen(name)
+    return (screens[name] ~= nil) and (view:get_content() == screens[name])
 end
 
-function set_hud_to_last_book_page()
-    set_hud(last_book_page)
+function show_death_screen(cause, score)
+    screens.death_screen = DeathScreen.new(cause, score)
+    set_screen("death_screen")
 end
 
-function create_huds()
-    local huds = {}
-
-    huds.cab = create_cab()
-    huds.back_seats = create_back_seats()
-    huds.start_screen = create_start_screen()
-    huds.death_screen = nil
-
-    for number = 1,num_pages,1 do
-        huds[page_name(number)] = create_page(number)
-    end
-
-    return huds
+function create_screens()
+    return {
+        cab = Cab.new(),
+        back_seats = BackSeats.new(),
+        start_screen = StartScreen.new(),
+        death_screen = nil,
+    }
 end
 
 function love.load()
@@ -49,49 +40,20 @@ function love.load()
     -- Setup rendering
     love.graphics.setDefaultFilter("nearest", "nearest", 0)
     font = love.graphics.newFont("assets/font.ttf", 5, "none")
-    font:setFilter("nearest", "nearest", 5)
     love.graphics.setFont(font)
     love.graphics.setLineStyle("rough")
     canvas_size = {320, 180}
     canvas = love.graphics.newCanvas(canvas_size[1], canvas_size[2])
 
     -- Load assets
-    asset_cache = AssetCache.new()
-    
-    images = {
-        cab = love.graphics.newImage("assets/cab.png"),
-        eye = love.graphics.newImage("assets/eye.png"),
-        back_seats = love.graphics.newImage("assets/back_seats.png"),
-        book_open = love.graphics.newImage("assets/book_open.png"),
-        book = love.graphics.newImage("assets/book.png"),
-        page_arrow = love.graphics.newImage("assets/page_arrow.png"),
-        begin_ritual = love.graphics.newImage("assets/begin_ritual.png"),
-        wheel = love.graphics.newImage("assets/wheel.png"),
-        die = {
-            love.graphics.newImage("assets/die_I.png"),
-            love.graphics.newImage("assets/die_II.png"),
-            love.graphics.newImage("assets/die_III.png"),
-            love.graphics.newImage("assets/die_IV.png"),
-            love.graphics.newImage("assets/die_V.png"),
-            love.graphics.newImage("assets/die_VI.png"),
-        }
-    }
-    die_positions = {
-        {20, 90},
-        {210, 90},
-        {250, 90},
-        {100, 90},
-        {60, 90},
-        {180, 90},
-    }
+    assets = AssetCache.new()
 
-    -- Create huds
-    last_book_page = "book_page_1"
-    huds = create_huds()
-    set_hud("start_screen")
+    -- Create screens
+    view = View.new()
+    screens = create_screens()
+    set_screen("start_screen")
 
     -- Create state
-    current_exorcism = nil
     effects = Effects.new()
     car = Car.new()
     drive_load(car)
@@ -105,46 +67,37 @@ function love.load()
         Bar.new("demonic presence (lvl II)", 1, {0.58, 0.10, 0.10}, {0.38, 0.08, 0.08}, {1, 0.3, 0}, {1, 1, 1}),
         Bar.new("demonic presence (lvl III)", 1, {0.68, 0.11, 0.11}, {0.48, 0.09, 0.09}, {1, 0.3, 0}, {1, 1, 1}),
     }
+end
 
+function love.mousemoved(x, y, dx, dy, istouch)
+    local canvas_x, canvas_y = screen_to_canvas(x, y)
+    view:mousemoved(canvas_x, canvas_y, dx, dy)
 end
 
 function love.mousepressed(x, y, button)
-    if is_flipped then
-        x = love.graphics.getWidth() - x
-    end
-
     local canvas_x, canvas_y = screen_to_canvas(x, y)
-    current_hud:click(canvas_x, canvas_y, button)
+    view:click(canvas_x, canvas_y, button)
 end
 
 function love.keypressed(key, scancode, isrepeat)
-   current_hud:keypressed(key)
+   view:keypressed(key)
 end
 
 function love.update(dt)
     -- Pause at start screen
-    if (current_hud == huds.start_screen or
-        current_hud == huds.death_screen) then
+    view:update(dt)
+    if is_screen("start_screen") or
+       is_screen("death_screen") then
         return
     end
 
     drive_update(dt)
-    health_bar:set(car.health)
-    die_bars[1]:set(die.difficulty)
-    die_bars[2]:set(die.difficulty - 1)
-    die_bars[3]:set(die.difficulty - 2)
-    if (die.difficulty == die.max_difficulty) then
-        die_bars[3].name = "demonic presence (lvl ?????????????????)"
-    else
-        die_bars[3].name = "demonic presence (lvl III)"
-    end
-    current_hud:update(dt)
     car:update(dt)
     die:update(dt, car)
     radio:update(car)
 
-    if car.health <= 0 and current_hud ~= huds.death_screen then
-        set_hud_to_death_screen(car.died_from, car.d)
+    if car.health <= 0 then
+        show_death_screen(car.died_from, car.d)
     end
 
     -- Update effects
@@ -175,6 +128,7 @@ function draw_canvas()
 
     local x_offset, y_offset, scale = canvas_position()
     love.graphics.setCanvas()
+    love.graphics.setColor({1, 1, 1, 1})
     love.graphics.draw(canvas, x_offset, y_offset, 0, scale, scale)
 
     love.graphics.pop()
@@ -184,9 +138,9 @@ function love.draw()
     love.graphics.setCanvas(canvas)
     love.graphics.clear(0, 0, 0)
 
-    if (current_hud == huds.start_screen or
-        current_hud == huds.death_screen) then
-        current_hud:draw()
+    if is_screen("start_screen") or
+       is_screen("death_screen") then
+        view:draw()
     else
         effects:push()
 
@@ -195,7 +149,7 @@ function love.draw()
         drive_draw()
         love.graphics.pop()
 
-        current_hud:draw()
+        view:draw()
 
         effects:pop()
     end
