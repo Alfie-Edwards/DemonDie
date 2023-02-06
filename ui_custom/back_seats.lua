@@ -100,6 +100,7 @@ function BackSeats.new()
     obj:add_child(obj.bar)
 
     obj.die = Image.new()
+    obj:add_child(obj.die)
 
     return obj
 end
