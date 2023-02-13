@@ -5,13 +5,13 @@ require "utils"
 
 DeathScreen = {
     causes = {
-        crash_text = "You crashed!",
-        offroad_text = "You totaled your car offroad!",
-        cook_text = "You cooked in your car!",
-        unknown_text = "You died!",
-
-        score_intro_text = "Your distance: "
+        crash = "You crashed!",
+        offroad = "You totaled your car offroad!",
+        freeze = "You froze solid!",
+        cook = "You cooked in your car!",
+        unknown = "You died!",
     },
+    score_intro_text = "Your distance: "
 }
 setup_class("DeathScreen", SimpleElement)
 
@@ -27,14 +27,7 @@ function DeathScreen.new(cause, score)
         }
     )
 
-    local cause_str = DeathScreen.causes.unknown_text
-    if cause == "crash" then
-        cause_str = DeathScreen.causes.crash_text
-    elseif cause == "offroad" then
-        cause_str = DeathScreen.causes.offroad_text
-    elseif cause == "cook" then
-        cause_str = DeathScreen.causes.cook_text
-    end
+    local cause_str = DeathScreen.causes[cause] or DeathScreen.causes.unknown_text
 
     local cause_text = Text.new()
     cause_text:set_properties(
@@ -54,7 +47,7 @@ function DeathScreen.new(cause, score)
     )
     obj:add_child(cause_text)
 
-    local intro_str = DeathScreen.causes.score_intro_text
+    local intro_str = DeathScreen.score_intro_text
     local score_str = tostring(math.floor(score)).."m"
 
     local score_text = Drawable.new()

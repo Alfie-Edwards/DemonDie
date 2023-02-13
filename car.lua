@@ -77,7 +77,7 @@ function Car:update(dt)
 
     if self.temperature < self.safe_temperatures[1] then
         local damage_scale = ((self.safe_temperatures[1] - self.temperature) / 5) ^ 2
-        self:hurt(damage_scale * self.temperature_damage * dt, "cook")
+        self:hurt(damage_scale * self.temperature_damage * dt, "freeze")
     end
 
     if self.temperature > self.safe_temperatures[2] then
