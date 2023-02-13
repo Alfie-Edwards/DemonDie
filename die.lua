@@ -204,4 +204,6 @@ function Die:reroll(dt)
     end
 
     self:apply_effect(dt)
+    assets:get_mp3("dice34roll"):seek(0)
+    assets:get_mp3("dice34roll"):play()
 end

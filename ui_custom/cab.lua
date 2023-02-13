@@ -82,9 +82,16 @@ function Cab.new()
             image_data = assets:get_image_data("ac_cold"),
             cursor = love.mouse.getSystemCursor("hand"),
             click = function()
-                car.ac = "cold"
-                ac_cold:set_transform(scale_about(1, -1, assets:get_image("ac_cold"):getWidth() / 2, assets:get_image("ac_cold"):getHeight() / 2))
-                ac_hot:set_transform(love.math.newTransform())
+                if car.ac == "cold" then
+                    assets:get_mp3("button_off"):seek(0)
+                    assets:get_mp3("button_off"):play()
+                else
+                    car.ac = "cold"
+                    ac_cold:set_transform(scale_about(1, -1, assets:get_image("ac_cold"):getWidth() / 2, assets:get_image("ac_cold"):getHeight() / 2))
+                    ac_hot:set_transform(love.math.newTransform())
+                    assets:get_mp3("Button_plastic_4-4"):seek(0)
+                    assets:get_mp3("Button_plastic_4-4"):play()
+                end
             end,
         }
     )
@@ -95,10 +102,17 @@ function Cab.new()
             image = assets:get_image("ac_off"),
             image_data = assets:get_image_data("ac_off"),
             cursor = love.mouse.getSystemCursor("hand"),
-            click = function() 
-                car.ac = "off"
-                ac_cold:set_transform(love.math.newTransform())
-                ac_hot:set_transform(love.math.newTransform())
+            click = function()
+                if car.ac == "off" then
+                    assets:get_mp3("button_off"):seek(0)
+                    assets:get_mp3("button_off"):play()
+                else
+                    car.ac = "off"
+                    ac_cold:set_transform(love.math.newTransform())
+                    ac_hot:set_transform(love.math.newTransform())
+                    assets:get_mp3("Button_plastic_4-4"):seek(0)
+                    assets:get_mp3("Button_plastic_4-4"):play()
+                end
             end,
         }
     )
@@ -109,10 +123,17 @@ function Cab.new()
             image = assets:get_image("ac_hot"),
             image_data = assets:get_image_data("ac_hot"),
             cursor = love.mouse.getSystemCursor("hand"),
-            click = function() 
-                car.ac = "off"
-                ac_cold:set_transform(love.math.newTransform())
-                ac_hot:set_transform(scale_about(1, -1, assets:get_image("ac_hot"):getWidth() / 2, assets:get_image("ac_hot"):getHeight() / 2))
+            click = function()
+                if car.ac == "hot" then
+                    assets:get_mp3("button_off"):seek(0)
+                    assets:get_mp3("button_off"):play()
+                else
+                    car.ac = "hot"
+                    ac_cold:set_transform(love.math.newTransform())
+                    ac_hot:set_transform(scale_about(1, -1, assets:get_image("ac_hot"):getWidth() / 2, assets:get_image("ac_hot"):getHeight() / 2))
+                    assets:get_mp3("Button_plastic_4-4"):seek(0)
+                    assets:get_mp3("Button_plastic_4-4"):play()
+                end
             end,
         }
     )
@@ -141,7 +162,11 @@ function Cab.new()
             image = assets:get_image("eye"),
             image_data = assets:get_image_data("eye"),
             cursor = love.mouse.getSystemCursor("hand"),
-            click = function() set_screen("back_seats") end,
+            click = function()
+                set_screen("back_seats")
+                assets:get_mp3("look"):seek(0)
+                assets:get_mp3("look"):play()
+            end,
         }
     )
     obj:add_child(eye)
@@ -171,7 +196,11 @@ function Cab.new()
             image = assets:get_image("book"),
             image_data = assets:get_image_data("book"),
             cursor = love.mouse.getSystemCursor("hand"),
-            click = function() obj:open_book() end,
+            click = function()
+                obj:open_book()
+                assets:get_mp3("book_open"):seek(0)
+                assets:get_mp3("book_open"):play()
+            end,
         }
     )
     
@@ -193,7 +222,11 @@ function Cab.new()
             width = canvas_size[1],
             height = canvas_size[2],
             cursor = love.mouse.getSystemCursor("hand"),
-            click = function() obj:close_book() end,
+            click = function()
+                obj:close_book()
+                assets:get_mp3("Book close"):seek(0)
+                assets:get_mp3("Book close"):play()
+            end,
         }
     )
 

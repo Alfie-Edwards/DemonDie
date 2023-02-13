@@ -9,7 +9,6 @@ setup_class("ImageButton", Image)
 function ImageButton.new()
     local obj = Image.new()
     setup_instance(obj, ImageButton)
-
     return obj
 end
 

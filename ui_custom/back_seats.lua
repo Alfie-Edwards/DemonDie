@@ -81,7 +81,11 @@ function BackSeats.new()
             image_data = assets:get_image_data("eye"),
             transform = scale_about(-1, 1, assets:get_image("eye"):getWidth() / 2, assets:get_image("eye"):getHeight() / 2),
             cursor = love.mouse.getSystemCursor("hand"),
-            click = function() set_screen("cab") end,
+            click = function()
+                set_screen("cab")
+                assets:get_mp3("look"):seek(0)
+                assets:get_mp3("look"):play()
+            end,
         }
     )
     obj:add_child(eye)

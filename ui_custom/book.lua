@@ -52,7 +52,11 @@ function Book.new()
             image = assets:get_image("page_arrow"),
             image_data = assets:get_image_data("page_arrow"),
             cursor = love.mouse.getSystemCursor("hand"),
-            click = function() obj:next_page() end,
+            click = function()
+                obj:next_page()
+                assets:get_mp3("page_turn"):seek(0)
+                assets:get_mp3("page_turn"):play()
+            end,
         }
     )
 
@@ -65,7 +69,11 @@ function Book.new()
             image_data = assets:get_image_data("page_arrow"),
             transform = scale_about(-1, 1, assets:get_image("page_arrow"):getWidth() / 2, assets:get_image("page_arrow"):getHeight() / 2),
             cursor = love.mouse.getSystemCursor("hand"),
-            click = function() obj:prev_page() end,
+            click = function()
+                obj:prev_page()
+                assets:get_mp3("page_turn"):seek(0)
+                assets:get_mp3("page_turn"):play()
+            end,
         }
     )
 

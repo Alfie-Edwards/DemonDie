@@ -19,7 +19,8 @@ function Exorcism.new(die)
 end
 
 function Exorcism:begin()
-
+    assets:get_mp3("Big Bell"):seek(0)
+    assets:get_mp3("Big Bell"):play()
 end
 
 function Exorcism:stage_complete()
@@ -28,6 +29,8 @@ function Exorcism:stage_complete()
         self.die:reset_difficulty()
         self.complete = true
         self.die:reroll()
+        assets:get_mp3("Soul Steal 02"):seek(0)
+        assets:get_mp3("Soul Steal 02"):play()
     else
         self.current_stage = create_typing_stage(die.difficulty / die.max_difficulty)
     end

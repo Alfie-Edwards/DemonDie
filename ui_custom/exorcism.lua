@@ -75,6 +75,7 @@ function ExorcismView:begin()
     self:remove_child(self.start_image)
 
     self.current_exorcism = Exorcism.new(die)
+    self.current_exorcism:begin()
     self:update_text()
     self:add_child(self.text)
 end
