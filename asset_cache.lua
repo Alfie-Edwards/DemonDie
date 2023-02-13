@@ -4,6 +4,7 @@ AssetCache = {
     images = nil,
     image_data = nil,
     fonts = nil,
+    sounds = nil,
 }
 setup_class("AssetCache")
 
@@ -14,6 +15,7 @@ function AssetCache.new()
     obj.images = {}
     obj.image_data = {}
     obj.fonts = {}
+    obj.sounds = {}
 
     return obj
 end
@@ -38,4 +40,16 @@ function AssetCache:get_font(name)
         self.fonts[name]:setFilter("nearest", "nearest", 5)
     end
     return self.fonts[name]
+end
+
+function AssetCache:get_mp3(name, mode)
+    return self:get_sound(name, "mp3", mode)
+end
+
+function AssetCache:get_sound(name, extension, mode)
+    name = name.."."..extension or "mp3"
+    if self.sounds[name] == nil then
+        self.sounds[name] = love.audio.newSource("assets/audio/"..name, mode or "static")
+    end
+    return self.sounds[name]
 end

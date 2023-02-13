@@ -2,17 +2,9 @@ require "car"
 
 
 Radio = {
-    stations = {
-        classic = love.audio.newSource("assets/audio/Hall of the Mountain King.mp3", "stream"),
-        metal   = love.audio.newSource("assets/audio/Metalmania.mp3", "stream"),
-        jazz    = love.audio.newSource("assets/audio/Shades of Spring.mp3", "stream"),
-        country = love.audio.newSource("assets/audio/Hillbilly Swing.mp3", "stream"),
-    },
-
+    stations = nil,
     current_station = nil,  -- just used to know when to play the switching sound
-
-    switching_sound = love.audio.newSource("assets/audio/radio_noises.ogg", "static"),
-
+    switching_sound = nil,
     car = nil,
 }
 Radio.__index = Radio
@@ -21,6 +13,14 @@ function Radio.new(car)
     local obj = {}
     setmetatable(obj, Radio)
     obj.car = car
+
+    obj.stations = {
+        classic = assets:get_mp3("Hall of the Mountain King", "stream"),
+        metal   = assets:get_mp3("Metalmania", "stream"),
+        jazz    = assets:get_mp3("Shades of Spring", "stream"),
+        country = assets:get_mp3("Hillbilly Swing", "stream"),
+    }
+    obj.switching_sound = assets:get_sound("radio_noises", "ogg"),
 
     obj:update()
 
