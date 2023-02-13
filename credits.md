@@ -17,3 +17,6 @@ TODO: add this as a screen in-game (press `c` from start screen?)
 
 * radio_noises: [mattwasser](https://freesound.org/people/mattwasser/sounds/58932/)
     * Licensed under the Creative Commons 0 License.
+
+* Short-horn: [14FValtrovaT](https://freesound.org/people/14FValtrovaT/sounds/419698/)
+    * Licensed under the Noncommercial 3.0 License.

@@ -11,6 +11,7 @@ Car = {
     last_swerve = 0,
     speed = 0,
     radio_stations = {"off", "classic", "metal", "jazz", "country"},
+    beep_sound = love.audio.newSource("assets/audio/Short-horn.mp3", "static"),
 
     ambient_temperature = 20,  -- Starting temp, and temp always tends towards this value
     ambient_power = 0.01,  -- How quickly the cars temp will tend towards ambient
@@ -132,6 +133,10 @@ end
 
 function Car:beep()
     self.last_horn = 0
+    if self.beep_sound:tell() > 0.07 then
+        self.beep_sound:seek(0.07)
+    end
+    self.beep_sound:play()
 end
 
 -- driving
